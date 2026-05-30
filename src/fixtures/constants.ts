@@ -26,3 +26,5 @@ export const BRANCHES = [
   { label: 'Mathematics & Computing', value: 'maths' },
   { label: 'Other', value: 'other' },
 ];
+
+export const FRESHER_FORM_URL = 'https://forms.gle/REPLACE_WITH_REAL_URL';

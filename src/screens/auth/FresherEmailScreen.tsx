@@ -1,51 +1,31 @@
-import { useState } from 'react';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { Linking } from 'react-native';
 import { View } from 'react-native';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '@/types';
-import { IIT_DOMAINS } from '@/fixtures/constants';
+import { FRESHER_FORM_URL } from '@/fixtures/constants';
 import { Screen } from '@/components/Screen';
 import { TopBar } from '@/components/TopBar';
 import { Title } from '@/components/Title';
 import { Body } from '@/components/Body';
-import { Field } from '@/components/Field';
 import { Button } from '@/components/Button';
 import { Eyebrow } from '@/components/Eyebrow';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'FresherEmail'>;
 
 export function FresherEmailScreen({ navigation }: Props) {
-  const [email, setEmail] = useState('');
-  const [err, setErr] = useState('');
-  const ok = IIT_DOMAINS.some((d) => email.trim().toLowerCase().endsWith('@' + d));
-
-  const submit = () => {
-    const v = email.trim().toLowerCase();
-    if (!v) { setErr('Enter your institute email.'); return; }
-    if (!ok) { 
-      setErr("This email domain isn't on our list. Use the document path instead, or check the address."); 
-      return; 
-    }
-    navigation.navigate('Otp', { email: v, next: 'ProfileName' });
-  };
-
   return (
-    <Screen footer={<Button onPress={submit} disabled={!ok}>Send code</Button>}>
+    <Screen footer={<Button onPress={() => Linking.openURL(FRESHER_FORM_URL)}>Open form</Button>}>
       <TopBar onBack={navigation.goBack}>
-        <Eyebrow>Verify · IIT email</Eyebrow>
+        <Eyebrow>Verify · 2026 batch</Eyebrow>
       </TopBar>
       <View style={{ paddingTop: 26, marginBottom: 40 }}>
-        <Title size={34} style={{ marginBottom: 16 }}>Your institute email.</Title>
-        <Body>One of the eight accepted IIT domains. We'll send a six-digit code.</Body>
+        <Title size={36} style={{ marginBottom: 16 }}>
+          {'Fill out the\nform to join.'}
+        </Title>
+        <Body>
+          Submit your details in our Google Form. We review every application and send your access link within a few hours.
+        </Body>
       </View>
-      <Field
-        label="Institute email"
-        value={email}
-        placeholder="you@iitb.ac.in"
-        type="email-address"
-        autoFocus
-        error={err}
-        onChange={(v) => { setEmail(v); if (err) setErr(''); }}
-      />
     </Screen>
   );
 }
