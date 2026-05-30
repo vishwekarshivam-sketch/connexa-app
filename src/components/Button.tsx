@@ -1,5 +1,5 @@
 import { TouchableOpacity, Text, ViewStyle, TextStyle } from 'react-native';
-import { colors, fonts } from '../tokens';
+import { colors, fonts } from '@/tokens';
 
 type Variant = 'primary' | 'ghost' | 'text';
 

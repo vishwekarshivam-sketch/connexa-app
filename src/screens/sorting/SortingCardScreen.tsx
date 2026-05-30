@@ -4,11 +4,13 @@ import { AuthStackParamList } from '@/types';
 import { HOUSES } from '@/fixtures/houseData';
 import { colors, fonts } from '@/tokens';
 import { Mark } from '@/components/Mark';
+import { useAuth } from '@/context/AuthContext';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'SortingCard'>;
 
 export function SortingCardScreen({ navigation, route }: Props) {
   const house = HOUSES[route.params.house];
+  const { signIn } = useAuth();
 
   return (
     <View style={{ 
@@ -53,9 +55,8 @@ export function SortingCardScreen({ navigation, route }: Props) {
 
       <TouchableOpacity
         onPress={() => {
-          // Navigate to main app — replace entire stack
-          navigation.reset({ index: 0, routes: [{ name: 'Splash' }] });
-          // Note: In a real app, this would switch to MainNavigator
+          // Sign in to trigger transition to MainNavigator in RootNavigator
+          signIn();
         }}
         style={{
           borderWidth: 1,
@@ -78,3 +79,4 @@ export function SortingCardScreen({ navigation, route }: Props) {
     </View>
   );
 }
+

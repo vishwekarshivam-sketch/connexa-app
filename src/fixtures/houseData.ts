@@ -1,4 +1,4 @@
-import { colors } from '../tokens';
+import { colors } from '@/tokens';
 
 export interface HouseInfo {
   id: 'tinkerers' | 'wanderers' | 'strategists' | 'mavericks';

@@ -1,5 +1,5 @@
 import { View, Text } from 'react-native';
-import { colors, fonts } from '../tokens';
+import { colors, fonts } from '@/tokens';
 
 interface Props { 
   step: number; 

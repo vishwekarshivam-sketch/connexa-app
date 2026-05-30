@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { View, TextInput, TouchableOpacity, Text } from 'react-native';
-import { colors, fonts } from '../tokens';
+import { colors, fonts } from '@/tokens';
 
 interface Props { 
   value: string; 

@@ -1,5 +1,5 @@
 import Svg, { Rect } from 'react-native-svg';
-import { colors } from '../tokens';
+import { colors } from '@/tokens';
 
 interface Props { 
   width?: number; 

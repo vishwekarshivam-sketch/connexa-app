@@ -1,11 +1,11 @@
-import { useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import { AuthNavigator } from './AuthNavigator';
-import { MainNavigator } from './MainNavigator';
+import { AuthNavigator } from '@/navigation/AuthNavigator';
+import { MainNavigator } from '@/navigation/MainNavigator';
+import { useAuth } from '@/context/AuthContext';
 
 // When auth is complete, swap to MainNavigator
 export function RootNavigator() {
-  const [isAuthenticated, setAuthenticated] = useState(false);
+  const { isAuthenticated } = useAuth();
 
   return (
     <NavigationContainer>

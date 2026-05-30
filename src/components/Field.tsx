@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { View, TextInput, Text, ViewStyle } from 'react-native';
-import { colors, fonts } from '../tokens';
-import { Eyebrow } from './Eyebrow';
-import { Icon } from './Icon';
+import { colors, fonts } from '@/tokens';
+import { Eyebrow } from '@/components/Eyebrow';
+import { Icon } from '@/components/Icon';
 
 interface Props {
   label?: string;

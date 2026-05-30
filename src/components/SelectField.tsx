@@ -1,7 +1,7 @@
 import { View } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
-import { colors, fonts } from '../tokens';
-import { Eyebrow } from './Eyebrow';
+import { colors, fonts } from '@/tokens';
+import { Eyebrow } from '@/components/Eyebrow';
 
 interface Option { 
   label: string; 

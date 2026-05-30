@@ -1,6 +1,6 @@
 import { View, TouchableOpacity } from 'react-native';
-import { colors } from '../tokens';
-import { Icon } from './Icon';
+import { colors } from '@/tokens';
+import { Icon } from '@/components/Icon';
 
 interface Props { 
   onBack?: () => void; 

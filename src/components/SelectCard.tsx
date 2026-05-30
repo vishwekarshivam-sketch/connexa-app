@@ -1,6 +1,6 @@
 import { TouchableOpacity, View, Text, ViewStyle } from 'react-native';
-import { colors, fonts } from '../tokens';
-import { Icon, IconName } from './Icon';
+import { colors, fonts } from '@/tokens';
+import { Icon, IconName } from '@/components/Icon';
 
 interface Props {
   icon?: IconName;
