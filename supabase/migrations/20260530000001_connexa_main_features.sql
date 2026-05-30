@@ -65,6 +65,9 @@ using (
   verification_status = 'verified'
   and house is not null
   and house = (
-    select house from public.users where id = auth.uid()
+    select house from public.users
+    where id = auth.uid()
+      and verification_status = 'verified'
+      and house is not null
   )
 );

@@ -345,9 +345,17 @@ export async function getHouseMembers(house: House): Promise<ConnexaUser[]> {
 export async function getHouseScores(): Promise<HouseScore[]> {
   try {
     const client = requireSupabase();
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - ((dayOfWeek + 6) % 7));
+    monday.setHours(0, 0, 0, 0);
+    const weekStart = monday.toISOString().slice(0, 10);
+
     const { data, error } = await client
       .from('house_scores')
       .select('*')
+      .eq('week_start', weekStart)
       .order('score', { ascending: false });
     if (error) throw error;
     return (data ?? []) as HouseScore[];
@@ -407,10 +415,15 @@ export async function respondToIntroduction(
 ): Promise<{ error: string | null }> {
   try {
     const client = requireSupabase();
+    const { data: authData, error: authError } = await client.auth.getUser();
+    if (authError) throw authError;
+    if (!authData.user) return { error: 'You need to be signed in.' };
+
     const { error } = await client
       .from('introductions')
       .update({ status: response, responded_at: new Date().toISOString() })
-      .eq('id', id);
+      .eq('id', id)
+      .eq('to_user', authData.user.id);
     if (error) return { error: error.message };
     return { error: null };
   } catch (error) {

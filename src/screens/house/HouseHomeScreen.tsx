@@ -25,7 +25,7 @@ export function HouseHomeScreen() {
 
   const tiles = [
     { label: 'Members', value: String(members.length + 1), sub: 'in your house' },
-    { label: 'Active today', value: String(activeCount), sub: 'online now' },
+    { label: 'Active today', value: String(activeCount), sub: 'updated recently' },
     { label: 'House Lore', value: house.ethos, isText: true },
     { label: 'First Signal', value: '—', sub: 'coming soon' },
     { label: 'This week', value: '—' },

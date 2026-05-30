@@ -13,8 +13,14 @@ export function IntroductionsScreen() {
   }, []);
 
   const respond = async (id: string, response: 'accepted' | 'passed') => {
+    const removed = intros.find((i) => i.id === id);
     setIntros((prev) => prev.filter((i) => i.id !== id));
-    await respondToIntroduction(id, response);
+    const { error } = await respondToIntroduction(id, response);
+    if (error && removed) {
+      setIntros((prev) => [...prev, removed].sort((a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      ));
+    }
   };
 
   return (
