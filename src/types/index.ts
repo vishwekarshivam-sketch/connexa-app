@@ -1,4 +1,4 @@
-export type UserType = 'fresher' | 'iitb';
+export type UserType = 'fresher' | 'student_25b' | 'student_other';
 
 export type House = 'tinkerers' | 'wanderers' | 'strategists' | 'mavericks';
 
@@ -35,9 +35,9 @@ export type AuthStackParamList = {
   FresherPath: undefined;
   FresherEmail: undefined;
   IitbEmail: undefined;
-  Otp: { email: string; next: string };
+  Otp: { email: string; next: 'ProfileName'; userType: 'fresher' | 'student_25b'; iit: string };
   DocForm: undefined;
-  Pending: { displayName: string; iitLabel: string; roll: string };
+  Pending: { displayName: string; iitLabel: string; roll: string; email?: string };
   ProfileName: undefined;
   ProfilePhoto: undefined;
   ProfileGender: undefined;
