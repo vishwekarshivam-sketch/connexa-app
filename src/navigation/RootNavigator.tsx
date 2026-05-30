@@ -1,12 +1,15 @@
+import { useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { AuthNavigator } from './AuthNavigator';
+import { MainNavigator } from './MainNavigator';
 
 // When auth is complete, swap to MainNavigator
-// For now, always show auth flow
 export function RootNavigator() {
+  const [isAuthenticated, setAuthenticated] = useState(false);
+
   return (
     <NavigationContainer>
-      <AuthNavigator />
+      {isAuthenticated ? <MainNavigator /> : <AuthNavigator />}
     </NavigationContainer>
   );
 }

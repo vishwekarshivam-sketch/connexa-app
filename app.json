@@ -1,28 +1,41 @@
 {
   "expo": {
-    "name": "connexa-app",
-    "slug": "connexa-app",
+    "name": "Connexa",
+    "slug": "connexa",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#15161C"
+    },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": false,
+      "bundleIdentifier": "app.connexa.mobile"
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#15161C"
       },
-      "predictiveBackGestureEnabled": false
+      "package": "app.connexa.mobile"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "name": "Connexa",
+      "shortName": "Connexa",
+      "lang": "en",
+      "themeColor": "#15161C",
+      "backgroundColor": "#EFE7D6",
+      "bundler": "metro"
     },
     "plugins": [
-      "expo-font"
+      "expo-font",
+      "expo-image-picker",
+      "expo-splash-screen"
     ]
   }
 }
