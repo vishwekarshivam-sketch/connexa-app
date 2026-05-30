@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '@/types';
@@ -5,78 +6,102 @@ import { HOUSES } from '@/fixtures/houseData';
 import { colors, fonts } from '@/tokens';
 import { Mark } from '@/components/Mark';
 import { useAuth } from '@/context/AuthContext';
+import { completeSorting } from '@/lib/supabase';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'SortingCard'>;
 
 export function SortingCardScreen({ navigation, route }: Props) {
   const house = HOUSES[route.params.house];
-  const { signIn } = useAuth();
+  const { setUser } = useAuth();
+  const [err, setErr] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const enter = async () => {
+    setLoading(true);
+    const result = await completeSorting(route.params.house);
+    setLoading(false);
+    if (result.error) {
+      setErr(result.error);
+      return;
+    }
+    if (result.user) setUser(result.user);
+  };
 
   return (
-    <View style={{ 
-      flex: 1, 
-      backgroundColor: house.primary, 
-      padding: 32, 
-      justifyContent: 'space-between' 
+    <View style={{
+      flex: 1,
+      backgroundColor: house.primary,
+      padding: 32,
+      justifyContent: 'space-between',
     }}>
       <View style={{ alignItems: 'flex-start', gap: 12 }}>
         <Mark width={80} color="rgba(239,231,214,0.4)" />
-        <Text style={{ 
-          fontFamily: fonts.label, 
-          fontSize: 10.5, 
-          fontWeight: '500', 
-          textTransform: 'uppercase', 
-          letterSpacing: 1.68, 
-          color: 'rgba(239,231,214,0.6)', 
-          marginTop: 8 
+        <Text style={{
+          fontFamily: fonts.label,
+          fontSize: 10.5,
+          fontWeight: '500',
+          textTransform: 'uppercase',
+          letterSpacing: 1.68,
+          color: 'rgba(239,231,214,0.6)',
+          marginTop: 8,
         }}>
           House membership
         </Text>
       </View>
 
       <View style={{ gap: 8 }}>
-        <Text style={{ 
-          fontFamily: fonts.serif, 
-          fontSize: 42, 
-          fontWeight: '300', 
-          color: colors.khadi, 
-          lineHeight: 46 
+        <Text style={{
+          fontFamily: fonts.serif,
+          fontSize: 42,
+          fontWeight: '300',
+          color: colors.khadi,
+          lineHeight: 46,
         }}>
           {house.nameEn}
         </Text>
-        <Text style={{ 
-          fontFamily: fonts.serif, 
-          fontSize: 22, 
-          color: 'rgba(239,231,214,0.5)' 
+        <Text style={{
+          fontFamily: fonts.serif,
+          fontSize: 22,
+          color: 'rgba(239,231,214,0.5)',
         }}>
           {house.nameHi}
         </Text>
       </View>
 
-      <TouchableOpacity
-        onPress={() => {
-          // Sign in to trigger transition to MainNavigator in RootNavigator
-          signIn();
-        }}
-        style={{
-          borderWidth: 1,
-          borderColor: 'rgba(239,231,214,0.4)',
-          padding: 18,
-          alignItems: 'center',
-        }}
-      >
-        <Text style={{ 
-          fontFamily: fonts.label, 
-          fontSize: 11, 
-          fontWeight: '500', 
-          textTransform: 'uppercase', 
-          letterSpacing: 2.2, 
-          color: colors.khadi 
-        }}>
-          Enter Connexa
-        </Text>
-      </TouchableOpacity>
+      <View style={{ gap: 12 }}>
+        {!!err && (
+          <Text style={{
+            fontFamily: fonts.body,
+            fontStyle: 'italic',
+            fontSize: 13.5,
+            color: 'rgba(239,231,214,0.7)',
+          }}>
+            {err}
+          </Text>
+        )}
+        <TouchableOpacity
+          onPress={enter}
+          disabled={loading}
+          style={{
+            borderWidth: 1,
+            borderColor: 'rgba(239,231,214,0.4)',
+            padding: 18,
+            alignItems: 'center',
+            opacity: loading ? 0.5 : 1,
+          }}
+        >
+          <Text style={{
+            fontFamily: fonts.label,
+            fontSize: 11,
+            fontWeight: '500',
+            textTransform: 'uppercase',
+            letterSpacing: 2.2,
+            color: colors.khadi,
+          }}>
+            {loading ? 'Entering...' : 'Enter Connexa'}
+          </Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
-
