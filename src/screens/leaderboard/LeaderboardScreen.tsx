@@ -1,17 +1,24 @@
+import { useEffect, useState } from 'react';
 import { View, Text, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, fonts } from '@/tokens';
 import { HOUSES } from '@/fixtures/houseData';
+import { getHouseScores, HouseScore } from '@/lib/supabase';
 
-const MOCK_STANDINGS = [
-  { house: 'tinkerers', score: 2840, members: 67 },
-  { house: 'wanderers', score: 2610, members: 59 },
-  { house: 'strategists', score: 2490, members: 72 },
-  { house: 'mavericks', score: 2350, members: 61 },
-];
+function weekLabel(weekStart: string): string {
+  const d = new Date(weekStart);
+  return d.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
+}
 
 export function LeaderboardScreen() {
   const insets = useSafeAreaInsets();
+  const [scores, setScores] = useState<HouseScore[]>([]);
+
+  useEffect(() => {
+    getHouseScores().then(setScores);
+  }, []);
+
+  const label = scores[0] ? `Week of ${weekLabel(scores[0].week_start)}` : 'This week';
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.khadi, paddingTop: insets.top }}>
@@ -19,37 +26,37 @@ export function LeaderboardScreen() {
         <Text style={{ fontFamily: fonts.serif, fontSize: 28, color: colors.ink }}>
           Leaderboard
         </Text>
-        <Text style={{ 
-          fontFamily: fonts.body, 
-          fontStyle: 'italic', 
-          fontSize: 14, 
-          color: colors.inkMute, 
-          marginTop: 4 
+        <Text style={{
+          fontFamily: fonts.body,
+          fontStyle: 'italic',
+          fontSize: 14,
+          color: colors.inkMute,
+          marginTop: 4,
         }}>
-          House standings · Week 3
+          House standings · {label}
         </Text>
       </View>
       <ScrollView contentContainerStyle={{ paddingHorizontal: 24, gap: 12 }}>
-        {MOCK_STANDINGS.map((s, i) => {
+        {scores.map((s, i) => {
           const house = HOUSES[s.house];
           return (
-            <View 
-              key={s.house} 
-              style={{ 
-                flexDirection: 'row', 
-                alignItems: 'center', 
-                gap: 16, 
-                paddingVertical: 18, 
-                borderBottomWidth: 1, 
-                borderBottomColor: colors.hairlineSoft 
+            <View
+              key={s.house}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 16,
+                paddingVertical: 18,
+                borderBottomWidth: 1,
+                borderBottomColor: colors.hairlineSoft,
               }}
             >
-              <Text style={{ 
-                fontFamily: fonts.serif, 
-                fontSize: 28, 
-                fontWeight: '300', 
-                color: colors.inkWhisper, 
-                width: 32 
+              <Text style={{
+                fontFamily: fonts.serif,
+                fontSize: 28,
+                fontWeight: '300',
+                color: colors.inkWhisper,
+                width: 32,
               }}>
                 {i + 1}
               </Text>
@@ -58,21 +65,29 @@ export function LeaderboardScreen() {
                 <Text style={{ fontFamily: fonts.serif, fontSize: 20, color: colors.ink }}>
                   {house.nameEn}
                 </Text>
-                <Text style={{ fontFamily: fonts.body, fontSize: 13, color: colors.inkMute }}>
-                  {s.members} members
-                </Text>
               </View>
-              <Text style={{ 
-                fontFamily: fonts.serif, 
-                fontSize: 24, 
-                fontWeight: '300', 
-                color: colors.ink 
+              <Text style={{
+                fontFamily: fonts.serif,
+                fontSize: 24,
+                fontWeight: '300',
+                color: colors.ink,
               }}>
                 {s.score.toLocaleString()}
               </Text>
             </View>
           );
         })}
+        {scores.length === 0 && (
+          <Text style={{
+            fontFamily: fonts.body,
+            fontStyle: 'italic',
+            fontSize: 15,
+            color: colors.inkWhisper,
+            marginTop: 32,
+          }}>
+            Scores loading…
+          </Text>
+        )}
       </ScrollView>
     </View>
   );
