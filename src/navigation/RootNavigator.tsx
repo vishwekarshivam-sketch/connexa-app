@@ -1,1 +1,12 @@
-import { View, Text } from 'react-native'; export function RootNavigator() { return <View style={{flex:1, alignItems:'center', justifyContent:'center'}}><Text>Root Navigator Placeholder</Text></View>; }
+import { NavigationContainer } from '@react-navigation/native';
+import { AuthNavigator } from './AuthNavigator';
+
+// When auth is complete, swap to MainNavigator
+// For now, always show auth flow
+export function RootNavigator() {
+  return (
+    <NavigationContainer>
+      <AuthNavigator />
+    </NavigationContainer>
+  );
+}
