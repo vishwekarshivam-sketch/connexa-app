@@ -43,7 +43,7 @@ export function MyProfileScreen({ navigation }: Props) {
     house.nameEn,
     user?.iit ?? '',
     user?.branch ?? '',
-    (user as any)?.hometown ?? '',
+    user?.hometown ?? '',
   ].filter(Boolean);
 
   return (

@@ -73,12 +73,12 @@ export function OtherProfileScreen({ navigation, route }: Props) {
   const houseKey = profile.house ?? 'tinkerers';
   const house = HOUSES[houseKey];
   const houseColor = houseColors[houseKey];
-  const isSameHouse = profile.house === me?.house;
+  const isSameHouse = !!profile.house && profile.house === me?.house;
 
   const chips = [
     profile.iit ?? '',
     profile.branch ?? '',
-    (profile as any).hometown ?? '',
+    profile.hometown ?? '',
   ].filter(Boolean);
 
   return (

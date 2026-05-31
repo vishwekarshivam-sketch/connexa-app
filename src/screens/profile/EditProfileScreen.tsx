@@ -27,7 +27,7 @@ export function EditProfileScreen({ navigation }: Props) {
   const house = HOUSES[houseKey];
 
   const [name, setName] = useState(user?.display_name ?? '');
-  const [hometown, setHometown] = useState((user as any)?.hometown ?? '');
+  const [hometown, setHometown] = useState(user?.hometown ?? '');
   const [gender, setGender] = useState<Gender>((user?.gender as Gender) ?? 'undisclosed');
   const [photoUri, setPhotoUri] = useState<string | null>(user?.photo_url ?? null);
   const [uploading, setUploading] = useState(false);
@@ -36,7 +36,7 @@ export function EditProfileScreen({ navigation }: Props) {
 
   const dirty =
     name !== (user?.display_name ?? '') ||
-    hometown !== ((user as any)?.hometown ?? '') ||
+    hometown !== (user?.hometown ?? '') ||
     gender !== ((user?.gender as Gender) ?? 'undisclosed');
 
   const pickPhoto = async () => {
@@ -68,7 +68,7 @@ export function EditProfileScreen({ navigation }: Props) {
       display_name: name.trim(),
       hometown: hometown.trim() || null,
       gender,
-    } as any);
+    });
     setSaving(false);
     if (error) { setErr(error); return; }
     navigation.goBack();
