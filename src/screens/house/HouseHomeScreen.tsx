@@ -1,13 +1,17 @@
 import { useEffect, useState } from 'react';
 import { ScrollView, View, Text, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { colors, fonts } from '@/tokens';
 import { HOUSES } from '@/fixtures/houseData';
 import { Mark } from '@/components/Mark';
 import { useAuth } from '@/context/AuthContext';
 import { getHouseMembers, ConnexaUser } from '@/lib/supabase';
+import { ProfileStackParamList } from '@/types';
 
-export function HouseHomeScreen() {
+type Props = NativeStackScreenProps<ProfileStackParamList, 'HouseHome'>;
+
+export function HouseHomeScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const [members, setMembers] = useState<ConnexaUser[]>([]);
@@ -62,7 +66,13 @@ export function HouseHomeScreen() {
             {house.nameEn}
           </Text>
         </View>
-        <Mark width={48} color="rgba(239,231,214,0.3)" />
+        <TouchableOpacity
+          onPress={() => navigation.navigate('MyProfile')}
+          hitSlop={12}
+          activeOpacity={0.75}
+        >
+          <Mark width={48} color="rgba(239,231,214,0.3)" />
+        </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 16, gap: 12 }}>
