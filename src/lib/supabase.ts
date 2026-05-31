@@ -25,6 +25,7 @@ export interface ConnexaUser {
   gender: Gender | null;
   iit: string | null;
   branch: string | null;
+  hometown: string | null;
   year: number | null;
   user_type: UserType | null;
   verification_status: VerificationStatus;
@@ -255,7 +256,7 @@ export async function submitDocForm(data: {
   }
 }
 
-export async function updateProfile(patch: Partial<Pick<ConnexaUser, 'display_name' | 'photo_url' | 'gender' | 'branch' | 'year'>>): Promise<AuthResult> {
+export async function updateProfile(patch: Partial<Pick<ConnexaUser, 'display_name' | 'photo_url' | 'gender' | 'branch' | 'year' | 'hometown'>>): Promise<AuthResult> {
   try {
     const client = requireSupabase();
     const { data: authData, error: authError } = await client.auth.getUser();
@@ -428,5 +429,21 @@ export async function respondToIntroduction(
     return { error: null };
   } catch (error) {
     return { error: messageFromError(error) };
+  }
+}
+
+export async function getPublicProfile(userId: string): Promise<ConnexaUser | null> {
+  try {
+    const client = requireSupabase();
+    const { data, error } = await client
+      .from('users')
+      .select('*')
+      .eq('id', userId)
+      .eq('verification_status', 'verified')
+      .maybeSingle();
+    if (error) throw error;
+    return data as ConnexaUser | null;
+  } catch {
+    return null;
   }
 }

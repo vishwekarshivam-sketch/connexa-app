@@ -57,3 +57,11 @@ export type MainTabParamList = {
   Leaderboard: undefined;
   Date: undefined;
 };
+
+export type ProfileStackParamList = {
+  HouseHome: undefined;
+  MyProfile: undefined;
+  OtherProfile: { userId: string };
+  EditProfile: undefined;
+  Settings: undefined;
+};
