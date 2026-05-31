@@ -1,7 +1,7 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MainTabParamList } from '@/types';
 import { colors, fonts } from '@/tokens';
-import { HouseHomeScreen } from '@/screens/house/HouseHomeScreen';
+import { ProfileNavigator } from '@/navigation/ProfileNavigator';
 import { DiscoverScreen } from '@/screens/discover/DiscoverScreen';
 import { IntroductionsScreen } from '@/screens/introductions/IntroductionsScreen';
 import { LeaderboardScreen } from '@/screens/leaderboard/LeaderboardScreen';
@@ -29,7 +29,7 @@ export function MainNavigator() {
         },
       }}
     >
-      <Tab.Screen name="House" component={HouseHomeScreen} />
+      <Tab.Screen name="House" component={ProfileNavigator} />
       <Tab.Screen name="Discover" component={DiscoverScreen} />
       <Tab.Screen name="Introductions" component={IntroductionsScreen} />
       <Tab.Screen name="Leaderboard" component={LeaderboardScreen} />
