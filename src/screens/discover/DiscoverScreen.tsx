@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { ScrollView, View, Text, TouchableOpacity, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { ProfileStackParamList } from '@/types';
 import { colors, fonts } from '@/tokens';
 import { Eyebrow } from '@/components/Eyebrow';
 import { useAuth } from '@/context/AuthContext';
@@ -12,6 +15,7 @@ const FILTERS: Filter[] = ['All', 'Your IIT', 'Cross-IIT', 'By Branch'];
 export function DiscoverScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
+  const navigation = useNavigation<NativeStackNavigationProp<ProfileStackParamList>>();
   const [members, setMembers] = useState<ConnexaUser[]>([]);
   const [filter, setFilter] = useState<Filter>('All');
 
@@ -101,6 +105,7 @@ export function DiscoverScreen() {
           <TouchableOpacity
             key={m.id}
             activeOpacity={0.85}
+            onPress={() => navigation.navigate('OtherProfile', { userId: m.id })}
             style={{
               flexDirection: 'row',
               alignItems: 'center',
