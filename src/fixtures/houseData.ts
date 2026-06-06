@@ -44,7 +44,12 @@ export const HOUSES: Record<string, HouseInfo> = {
   },
 };
 
-export function scoreHouse(answers: string[]): HouseInfo {
+export interface SortingResult {
+  house: HouseInfo;
+  scores: Record<string, number>;
+}
+
+export function scoreHouse(answers: string[]): SortingResult {
   const tally: Record<string, number> = { 
     tinkerers: 0, 
     wanderers: 0, 
@@ -57,5 +62,8 @@ export function scoreHouse(answers: string[]): HouseInfo {
   });
   
   const winner = Object.entries(tally).sort((a, b) => b[1] - a[1])[0][0];
-  return HOUSES[winner];
+  return {
+    house: HOUSES[winner],
+    scores: tally
+  };
 }

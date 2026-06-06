@@ -5,14 +5,30 @@ import { AuthStackParamList } from '@/types';
 import { colors, fonts } from '@/tokens';
 import { Mark } from '@/components/Mark';
 import { Eyebrow } from '@/components/Eyebrow';
+import { useAuthStore } from '@/stores/authStore';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Splash'>;
 
 export function SplashScreen({ navigation }: Props) {
+  const { isLoading, session, user } = useAuthStore();
+
   useEffect(() => {
-    const t = setTimeout(() => navigation.replace('UserType'), 2400);
+    // Wait for AuthProvider to finish bootstrapping before deciding the route.
+    if (isLoading) return;
+
+    const resume = (): 'Landing' | 'ProfileName' | 'SortingInvitation' => {
+      // Not signed in → start of funnel. (RootNavigator only mounts this
+      // stack for users who aren't fully onboarded, so house-holders never
+      // reach here.)
+      if (!session || !user) return 'Landing';
+      if (user.house) return 'SortingInvitation'; // edge: house set, gate not yet flipped
+      if (user.display_name) return 'SortingInvitation';
+      return 'ProfileName';
+    };
+
+    const t = setTimeout(() => navigation.replace(resume()), 2400);
     return () => clearTimeout(t);
-  }, [navigation]);
+  }, [navigation, isLoading, session, user]);
 
   return (
     <View style={{ 

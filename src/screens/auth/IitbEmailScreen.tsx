@@ -17,11 +17,13 @@ export function IitbEmailScreen({ navigation }: Props) {
   const [err, setErr] = useState('');
   const ok = email.trim().toLowerCase().endsWith('@iitb.ac.in');
 
+  // Validate then navigate immediately; the OTP send fires on the next screen's
+  // mount so the transition is instant rather than gated on the network call.
   const submit = () => {
     const v = email.trim().toLowerCase();
     if (!v) { setErr('Enter your IITB email.'); return; }
     if (!ok) { setErr('Only @iitb.ac.in emails are accepted here.'); return; }
-    navigation.navigate('Otp', { email: v, next: 'ProfileName' });
+    navigation.navigate('Otp', { email: v, next: 'ProfileName', userType: 'non_fresher', iit: 'iitb' });
   };
 
   return (

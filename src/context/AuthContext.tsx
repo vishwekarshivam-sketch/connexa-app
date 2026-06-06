@@ -2,11 +2,12 @@ import React, { createContext, ReactNode, useContext, useEffect, useMemo, useSta
 import { Session } from '@supabase/supabase-js';
 import {
   ConnexaUser,
-  getCurrentUserProfile,
+  getUserProfileById,
   isSupabaseConfigured,
   supabase,
   updateProfile,
 } from '@/lib/supabase';
+import { useAuthStore } from '@/stores/authStore';
 
 interface AuthContextType {
   bootstrapping: boolean;
@@ -28,13 +29,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<ConnexaUser | null>(null);
 
+  // Single source of truth: mirror auth state into the Zustand store the
+  // navigators read, so there is only one listener + one profile fetch.
+  const storeSetSession = useAuthStore((s) => s.setSession);
+  const storeSetUser = useAuthStore((s) => s.setUser);
+  const storeSetLoading = useAuthStore((s) => s.setLoading);
+
+  const applyUser = (next: ConnexaUser | null) => {
+    setUser(next);
+    storeSetUser(next);
+  };
+  const applySession = (next: Session | null) => {
+    setSession(next);
+    storeSetSession(next);
+  };
+
   const refreshUser = async () => {
-    if (!isSupabaseConfigured) {
-      setUser(null);
+    if (!isSupabaseConfigured || !supabase) {
+      applyUser(null);
       return;
     }
-    const profile = await getCurrentUserProfile();
-    setUser(profile);
+    const { data } = await supabase.auth.getSession();
+    const userId = data.session?.user?.id;
+    if (!userId) {
+      applyUser(null);
+      return;
+    }
+    applyUser(await getUserProfileById(userId));
   };
 
   useEffect(() => {
@@ -42,26 +63,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     async function bootstrap() {
       if (!supabase) {
-        if (mounted) setBootstrapping(false);
+        if (mounted) {
+          setBootstrapping(false);
+          storeSetLoading(false);
+        }
         return;
       }
       const { data } = await supabase.auth.getSession();
       if (!mounted) return;
-      setSession(data.session);
-      if (data.session) {
-        await refreshUser();
+      applySession(data.session);
+      if (data.session?.user?.id) {
+        applyUser(await getUserProfileById(data.session.user.id));
       }
-      if (mounted) setBootstrapping(false);
+      if (mounted) {
+        setBootstrapping(false);
+        storeSetLoading(false);
+      }
     }
 
     bootstrap();
     const { data: subscription } = supabase?.auth.onAuthStateChange((_event, nextSession) => {
-      setSession(nextSession);
-      if (!nextSession) {
-        setUser(null);
+      applySession(nextSession);
+      if (!nextSession?.user?.id) {
+        applyUser(null);
         return;
       }
-      refreshUser().catch(() => setUser(null));
+      getUserProfileById(nextSession.user.id)
+        .then(applyUser)
+        .catch(() => applyUser(null));
     }) ?? { data: { subscription: null } };
 
     return () => {
@@ -78,7 +107,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'users', filter: `id=eq.${user.id}` },
-        (payload) => setUser(payload.new as ConnexaUser),
+        (payload) => applyUser(payload.new as ConnexaUser),
       )
       .subscribe();
 
@@ -91,13 +120,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     bootstrapping,
     session,
     user,
-    isAuthenticated: !!session && user?.verification_status === 'verified' && !!user.house,
-    isVerified: user?.verification_status === 'verified',
+    isAuthenticated: !!session && user?.status === 'active' && !!user.house,
+    isVerified: !!user && ['onboarding', 'active'].includes(user.status),
     refreshUser,
-    setUser,
+    setUser: applyUser,
     updateUser: async (patch) => {
       const result = await updateProfile(patch);
-      if (result.user) setUser(result.user);
+      if (result.user) applyUser(result.user);
       return { error: result.error };
     },
     signIn: () => {
@@ -105,8 +134,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     signOut: async () => {
       await supabase?.auth.signOut();
-      setSession(null);
-      setUser(null);
+      applySession(null);
+      applyUser(null);
     },
   }), [bootstrapping, session, user]);
 

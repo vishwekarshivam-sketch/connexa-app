@@ -10,9 +10,10 @@ interface Props {
 }
 
 export function Title({ children, size = 36, weight = '400', color = colors.ink, style }: Props) {
+  const isLight = weight === '300';
   return (
     <Text style={[{
-      fontFamily: weight === '300' ? fonts.serifLight : fonts.serif,
+      fontFamily: isLight ? fonts.serifLight : fonts.serif,
       fontSize: size,
       lineHeight: size * 1.06,
       letterSpacing: -0.02 * size,

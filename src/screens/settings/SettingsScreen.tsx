@@ -83,24 +83,19 @@ function Row({
   );
 }
 
+import { useNotificationSettings, NotificationSettings } from '@/hooks/useNotificationSettings';
+
 export function SettingsScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const { user, signOut } = useAuth();
+  const { data: settings, updateSettings } = useNotificationSettings();
 
   const [darkMode, setDarkMode] = useState<DarkMode>('system');
-  const [notifs, setNotifs] = useState({
-    dailyPrompt: true,
-    reactions: true,
-    inviteConverted: true,
-    retentionBonus: true,
-    newMatch: true,
-    streakMilestone: true,
-    rankChanges: false,
-    monthlyReveal: true,
-  });
 
-  const toggleNotif = (key: keyof typeof notifs) =>
-    setNotifs((prev) => ({ ...prev, [key]: !prev[key] }));
+  const toggleNotif = (key: keyof NotificationSettings) => {
+    if (!settings) return;
+    updateSettings.mutate({ [key]: !settings[key] });
+  };
 
   const handleLogOut = () => {
     Alert.alert(
@@ -185,14 +180,14 @@ export function SettingsScreen({ navigation }: Props) {
         <Row label="Dark mode" value={darkLabel} onPress={cycleDark} />
 
         <SectionHeader title="Notifications" />
-        <Row label="Daily house prompt" toggle toggleValue={notifs.dailyPrompt} onToggle={() => toggleNotif('dailyPrompt')} />
-        <Row label="Reactions on my responses" toggle toggleValue={notifs.reactions} onToggle={() => toggleNotif('reactions')} />
-        <Row label="Invite converted" toggle toggleValue={notifs.inviteConverted} onToggle={() => toggleNotif('inviteConverted')} />
-        <Row label="Retention bonus earned" toggle toggleValue={notifs.retentionBonus} onToggle={() => toggleNotif('retentionBonus')} />
-        <Row label="New mutual match (Date)" toggle toggleValue={notifs.newMatch} onToggle={() => toggleNotif('newMatch')} />
-        <Row label="Streak milestone" toggle toggleValue={notifs.streakMilestone} onToggle={() => toggleNotif('streakMilestone')} />
-        <Row label="House rank changes" toggle toggleValue={notifs.rankChanges} onToggle={() => toggleNotif('rankChanges')} />
-        <Row label="Monthly leaderboard reveal" toggle toggleValue={notifs.monthlyReveal} onToggle={() => toggleNotif('monthlyReveal')} />
+        <Row label="Daily house prompt" toggle toggleValue={settings?.daily_prompt} onToggle={() => toggleNotif('daily_prompt')} />
+        <Row label="Reactions on my responses" toggle toggleValue={settings?.reaction} onToggle={() => toggleNotif('reaction')} />
+        <Row label="Invite converted" toggle toggleValue={settings?.invite_converted} onToggle={() => toggleNotif('invite_converted')} />
+        <Row label="Retention bonus earned" toggle toggleValue={settings?.retention_bonus} onToggle={() => toggleNotif('retention_bonus')} />
+        <Row label="New mutual match (Date)" toggle toggleValue={settings?.mutual_match} onToggle={() => toggleNotif('mutual_match')} />
+        <Row label="Streak milestone" toggle toggleValue={settings?.streak_milestone} onToggle={() => toggleNotif('streak_milestone')} />
+        <Row label="House rank changes" toggle toggleValue={settings?.house_rank_change} onToggle={() => toggleNotif('house_rank_change')} />
+        <Row label="Monthly leaderboard reveal" toggle toggleValue={settings?.monthly_reveal} onToggle={() => toggleNotif('monthly_reveal')} />
 
         <SectionHeader title="Date" />
         <Row label="My Date profile" onPress={() => {}} />
@@ -211,7 +206,7 @@ export function SettingsScreen({ navigation }: Props) {
         {user?.is_admin && (
           <>
             <SectionHeader title="Admin" />
-            <Row label="Admin panel" onPress={() => {}} />
+            <Row label="Admin panel" onPress={() => navigation.navigate('AdminPanel')} />
           </>
         )}
       </ScrollView>

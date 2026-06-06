@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ScrollView, View, Text, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { ScrollView, View, Text, Image, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ProfileStackParamList } from '@/types';
@@ -9,8 +9,9 @@ import { Mark } from '@/components/Mark';
 import { Icon } from '@/components/Icon';
 import { useAuth } from '@/context/AuthContext';
 import { ConnexaUser, getPublicProfile } from '@/lib/supabase';
+import { Skeleton } from '@/components/Skeleton';
 
-type Props = NativeStackScreenProps<ProfileStackParamList, 'OtherProfile'>;
+type Props = NativeStackScreenProps<any, any>;
 
 function Chip({ label, muted = false }: { label: string; muted?: boolean }) {
   return (
@@ -36,7 +37,7 @@ function Chip({ label, muted = false }: { label: string; muted?: boolean }) {
 export function OtherProfileScreen({ navigation, route }: Props) {
   const insets = useSafeAreaInsets();
   const { user: me } = useAuth();
-  const { userId } = route.params;
+  const { userId } = route.params as { userId: string };
   const [profile, setProfile] = useState<ConnexaUser | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -48,11 +49,7 @@ export function OtherProfileScreen({ navigation, route }: Props) {
   }, [userId]);
 
   if (loading) {
-    return (
-      <View style={{ flex: 1, backgroundColor: colors.khadi, alignItems: 'center', justifyContent: 'center', paddingTop: insets.top }}>
-        <ActivityIndicator color={colors.inkMute} />
-      </View>
-    );
+    return <OtherProfileSkeleton insets={insets} />;
   }
 
   if (!profile) {
@@ -196,6 +193,31 @@ export function OtherProfileScreen({ navigation, route }: Props) {
           </TouchableOpacity>
         )}
       </ScrollView>
+    </View>
+  );
+}
+
+function OtherProfileSkeleton({ insets }: { insets: any }) {
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.khadi, paddingTop: insets.top }}>
+      <View style={{ height: 48, paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center', marginTop: 8 }}>
+        <Skeleton width={24} height={24} radius={12} />
+      </View>
+      <View style={{ paddingHorizontal: 24, alignItems: 'center', paddingTop: 24 }}>
+        <Skeleton width={120} height={120} radius={0} style={{ marginBottom: 16 }} />
+        <Skeleton width={180} height={32} style={{ marginBottom: 12 }} />
+        <Skeleton width={120} height={14} style={{ marginBottom: 20 }} />
+        <View style={{ flexDirection: 'row', gap: 6, justifyContent: 'center', marginBottom: 32 }}>
+          <Skeleton width={80} height={24} />
+          <Skeleton width={60} height={24} />
+          <Skeleton width={90} height={24} />
+        </View>
+        <View style={{ width: '100%', alignItems: 'flex-start' }}>
+          <Skeleton width={100} height={12} style={{ marginBottom: 12 }} />
+          <Skeleton width="100%" height={16} style={{ marginBottom: 28 }} />
+          <Skeleton width={150} height={12} />
+        </View>
+      </View>
     </View>
   );
 }

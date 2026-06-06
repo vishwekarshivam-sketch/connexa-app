@@ -61,7 +61,7 @@ export function MyProfileScreen({ navigation }: Props) {
         </TouchableOpacity>
         <View style={{ flex: 1 }} />
         <TouchableOpacity onPress={() => navigation.navigate('Settings')} hitSlop={12}>
-          <Text style={{ fontFamily: fonts.label, fontSize: 16, color: colors.inkMute }}>⚙</Text>
+          <Icon name="settings" size={22} color={colors.inkMute} />
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => navigation.navigate('EditProfile')}

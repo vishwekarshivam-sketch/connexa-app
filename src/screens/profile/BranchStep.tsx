@@ -10,19 +10,29 @@ import { Title } from '@/components/Title';
 import { Body } from '@/components/Body';
 import { SelectField } from '@/components/SelectField';
 import { Button } from '@/components/Button';
+import { useAuth } from '@/context/AuthContext';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'ProfileBranch'>;
 
 export function BranchStep({ navigation }: Props) {
-  const [b, setB] = useState('');
+  const { user, updateUser } = useAuth();
+  const [b, setB] = useState(user?.branch ?? '');
+  const [saving, setSaving] = useState(false);
+
+  const submit = async () => {
+    setSaving(true);
+    const { error } = await updateUser({ branch: b });
+    setSaving(false);
+    if (!error) navigation.navigate('ProfileDone');
+  };
 
   return (
     <Screen footer={
       <Button 
-        onPress={() => navigation.navigate('ProfileDone')} 
-        disabled={!b}
+        onPress={submit} 
+        disabled={!b || saving}
       >
-        Finish
+        {saving ? 'Saving...' : 'Finish'}
       </Button>
     }>
       <TopBar onBack={navigation.goBack}>

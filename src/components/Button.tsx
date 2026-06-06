@@ -1,21 +1,32 @@
-import { TouchableOpacity, Text, ViewStyle, TextStyle } from 'react-native';
-import { colors, fonts } from '@/tokens';
+import { Text, ViewStyle, TextStyle, Pressable, StyleProp } from 'react-native';
+import Animated, { 
+  useSharedValue, 
+  useAnimatedStyle, 
+  withTiming, 
+  useReducedMotion 
+} from 'react-native-reanimated';
+import { colors, fonts, duration, ease } from '@/tokens';
+import { haptics } from '@/lib/haptics';
 
 type Variant = 'primary' | 'ghost' | 'text';
 
 interface Props {
-  children: React.ReactNode;
-  onPress: () => void;
+  children?: React.ReactNode;
+  title?: string;
+  onPress: () => void | Promise<void>;
   variant?: Variant;
   disabled?: boolean;
   full?: boolean;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
 }
 
-export function Button({ children, onPress, variant = 'primary', disabled = false, full = true, style }: Props) {
+export function Button({ children, title, onPress, variant = 'primary', disabled = false, full = true, style }: Props) {
   const isPrimary = variant === 'primary';
   const isGhost = variant === 'ghost';
   const isText = variant === 'text';
+
+  const reducedMotion = useReducedMotion();
+  const scale = useSharedValue(1);
 
   const containerStyle: ViewStyle = {
     height: isText ? undefined : 56,
@@ -40,13 +51,37 @@ export function Button({ children, onPress, variant = 'primary', disabled = fals
     color: isPrimary ? colors.khadi : colors.ink,
   };
 
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const handlePressIn = () => {
+    if (disabled || reducedMotion) return;
+    haptics.selection();
+    scale.value = withTiming(0.97, { 
+      duration: duration.instant, 
+      easing: ease.inOut 
+    });
+  };
+
+  const handlePressOut = () => {
+    if (disabled || reducedMotion) return;
+    scale.value = withTiming(1, { 
+      duration: duration.instant, 
+      easing: ease.inOut 
+    });
+  };
+
   return (
-    <TouchableOpacity
+    <Pressable
       onPress={disabled ? undefined : onPress}
-      activeOpacity={0.75}
-      style={[containerStyle, style]}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      style={[style]}
     >
-      <Text style={textStyle}>{children}</Text>
-    </TouchableOpacity>
+      <Animated.View style={[containerStyle, animatedStyle]}>
+        <Text style={textStyle}>{children ?? title}</Text>
+      </Animated.View>
+    </Pressable>
   );
 }

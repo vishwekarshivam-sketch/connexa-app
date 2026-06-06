@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { View, Text, Image, TouchableOpacity } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { ProfileStackParamList } from '@/types';
+import { Gender, ProfileStackParamList } from '@/types';
 import { colors, fonts, houseColors } from '@/tokens';
 import { HOUSES } from '@/fixtures/houseData';
 import { Screen } from '@/components/Screen';
@@ -14,11 +14,10 @@ import { uploadProfilePhoto } from '@/lib/supabase';
 
 type Props = NativeStackScreenProps<ProfileStackParamList, 'EditProfile'>;
 
-type Gender = 'man' | 'woman' | 'undisclosed';
 const GENDER_OPTIONS: { value: Gender; label: string }[] = [
-  { value: 'man', label: 'Man' },
-  { value: 'woman', label: 'Woman' },
-  { value: 'undisclosed', label: 'Prefer not to say' },
+  { value: 'male', label: 'Man' },
+  { value: 'female', label: 'Woman' },
+  { value: 'other', label: 'Prefer not to say' },
 ];
 
 export function EditProfileScreen({ navigation }: Props) {
@@ -28,7 +27,7 @@ export function EditProfileScreen({ navigation }: Props) {
 
   const [name, setName] = useState(user?.display_name ?? '');
   const [hometown, setHometown] = useState(user?.hometown ?? '');
-  const [gender, setGender] = useState<Gender>((user?.gender as Gender) ?? 'undisclosed');
+  const [gender, setGender] = useState<Gender>(user?.gender ?? 'other');
   const [photoUri, setPhotoUri] = useState<string | null>(user?.photo_url ?? null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -37,7 +36,7 @@ export function EditProfileScreen({ navigation }: Props) {
   const dirty =
     name !== (user?.display_name ?? '') ||
     hometown !== (user?.hometown ?? '') ||
-    gender !== ((user?.gender as Gender) ?? 'undisclosed');
+    gender !== (user?.gender ?? 'other');
 
   const pickPhoto = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({

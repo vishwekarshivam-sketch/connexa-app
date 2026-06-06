@@ -1,27 +1,23 @@
-import { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, fonts } from '@/tokens';
-import { getMyIntroductions, respondToIntroduction, IntroductionWithProfile } from '@/lib/supabase';
+import { useAuth } from '@/context/AuthContext';
+import { useMyIntroductions, useRespondToIntroduction } from '@/hooks/useIntroductions';
+import { Skeleton } from '@/components/Skeleton';
 
 export function IntroductionsScreen() {
   const insets = useSafeAreaInsets();
-  const [intros, setIntros] = useState<IntroductionWithProfile[]>([]);
-
-  useEffect(() => {
-    getMyIntroductions().then(setIntros);
-  }, []);
+  const { user } = useAuth();
+  const { data: intros = [], isLoading } = useMyIntroductions(user?.id || '');
+  const respondMutation = useRespondToIntroduction(user?.id || '');
 
   const respond = async (id: string, response: 'accepted' | 'passed') => {
-    const removed = intros.find((i) => i.id === id);
-    setIntros((prev) => prev.filter((i) => i.id !== id));
-    const { error } = await respondToIntroduction(id, response);
-    if (error && removed) {
-      setIntros((prev) => [...prev, removed].sort((a, b) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      ));
-    }
+    respondMutation.mutate({ id, response });
   };
+
+  if (isLoading) {
+    return <IntroductionsSkeleton insets={insets} />;
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.khadi, paddingTop: insets.top }}>
@@ -137,6 +133,34 @@ export function IntroductionsScreen() {
             No introductions yet.
           </Text>
         )}
+      </ScrollView>
+    </View>
+  );
+}
+
+function IntroductionsSkeleton({ insets }: { insets: any }) {
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.khadi, paddingTop: insets.top }}>
+      <View style={{ padding: 24, paddingBottom: 12 }}>
+        <Skeleton width={180} height={32} style={{ marginBottom: 8 }} />
+        <Skeleton width={200} height={14} />
+      </View>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 24, gap: 16 }}>
+        {[1, 2, 3].map(i => (
+          <View key={i} style={{ backgroundColor: colors.khadiLight, borderWidth: 1, borderColor: colors.hairlineSoft, padding: 20, gap: 12 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <Skeleton width={40} height={40} radius={0} />
+              <View style={{ gap: 4 }}>
+                <Skeleton width={120} height={18} />
+                <Skeleton width={150} height={12} />
+              </View>
+            </View>
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              <Skeleton width="100%" height={44} style={{ flex: 1 }} />
+              <Skeleton width={80} height={44} />
+            </View>
+          </View>
+        ))}
       </ScrollView>
     </View>
   );

@@ -1,43 +1,98 @@
-import { useCallback } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { useCallback, useEffect } from 'react';
+import { View, StyleSheet, Platform } from 'react-native';
 import { useFonts } from 'expo-font';
+import { 
+  Newsreader_400Regular, 
+  Newsreader_400Regular_Italic 
+} from '@expo-google-fonts/newsreader';
+import { SpaceMono_400Regular } from '@expo-google-fonts/space-mono';
 import * as SplashScreen from 'expo-splash-screen';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { RootNavigator } from '@/navigation/RootNavigator';
 import { AuthProvider } from '@/context/AuthContext';
+import { registerServiceWorker } from '@/sw-register';
+import { OfflineBanner } from '@/components/OfflineBanner';
+import { InstallPrompt } from '@/components/InstallPrompt';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+
+// TanStack Query Client setup per spec
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60_000,
+      gcTime: 5 * 60_000,
+      retry: 2,
+      retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10_000),
+    },
+    mutations: {
+      retry: 0,
+    },
+  },
+});
+
+function AppContent({ onLayout }: { onLayout: () => void }) {
+  useEffect(() => {
+    // Register service worker for PWA. Auth state is owned solely by AuthProvider.
+    registerServiceWorker();
+  }, []);
+
+  return (
+    <SafeAreaProvider>
+      <View style={styles.container} onLayout={onLayout}>
+        <RootNavigator />
+      </View>
+      <OfflineBanner />
+      <InstallPrompt />
+    </SafeAreaProvider>
+  );
+}
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
 
 export default function App() {
   const [fontsLoaded, fontError] = useFonts({
-    'Gambetta_300Light': require('./assets/fonts/Gambetta-Light.ttf'),
-    'Gambetta_400Regular': require('./assets/fonts/Gambetta-Regular.ttf'),
-    'ClashDisplay_500Medium': require('./assets/fonts/ClashDisplay-Medium.ttf'),
-    'Newsreader_400Regular': require('./assets/fonts/Newsreader-Regular.ttf'),
-    'Newsreader_400Regular_Italic': require('./assets/fonts/Newsreader-Italic.ttf'),
+    'Gambetta-Light': require('./assets/fonts/Gambetta-Light.ttf'),
+    'Gambetta-Regular': require('./assets/fonts/Gambetta-Regular.ttf'),
+    'Gambetta-Medium': require('./assets/fonts/Gambetta-Medium.ttf'),
+    'Gambetta-Semibold': require('./assets/fonts/Gambetta-Semibold.ttf'),
+    'ClashDisplay-Medium': require('./assets/fonts/ClashDisplay-Medium.ttf'),
+    'ClashDisplay-Semibold': require('./assets/fonts/ClashDisplay-Semibold.ttf'),
+    Newsreader_400Regular,
+    Newsreader_400Regular_Italic,
+    SpaceMono_400Regular,
   });
 
   const onLayoutRootView = useCallback(async () => {
     if (fontsLoaded || fontError) {
-      // This tells the splash screen to hide immediately! If we need to do
-      // extra data fetching, we can do it here.
-      await SplashScreen.hideAsync();
+      try {
+        await SplashScreen.hideAsync();
+      } catch (e) {
+        console.warn('Error hiding splash screen:', e);
+      }
     }
   }, [fontsLoaded, fontError]);
 
   if (!fontsLoaded && !fontError) {
-    return null;
+    return (
+      <View 
+        style={[styles.container, { backgroundColor: '#15161C' }]} 
+        onLayout={onLayoutRootView}
+      />
+    );
   }
 
   return (
-    <AuthProvider>
-      <SafeAreaProvider>
-        <View style={styles.container} onLayout={onLayoutRootView}>
-          <RootNavigator />
-        </View>
-      </SafeAreaProvider>
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <ErrorBoundary>
+        <AuthProvider>
+          <AppContent onLayout={onLayoutRootView} />
+        </AuthProvider>
+      </ErrorBoundary>
+      {Platform.OS === 'web' && <ReactQueryDevtools initialIsOpen={false} />}
+    </QueryClientProvider>
   );
 }
 

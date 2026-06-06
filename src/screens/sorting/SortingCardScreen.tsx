@@ -7,6 +7,7 @@ import { colors, fonts } from '@/tokens';
 import { Mark } from '@/components/Mark';
 import { useAuth } from '@/context/AuthContext';
 import { completeSorting } from '@/lib/supabase';
+import { NotificationPrePrompt } from '@/components/NotificationPrePrompt';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'SortingCard'>;
 
@@ -15,16 +16,26 @@ export function SortingCardScreen({ navigation, route }: Props) {
   const { setUser } = useAuth();
   const [err, setErr] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPrompt, setShowPrompt] = useState(false);
 
-  const enter = async () => {
+  const handleFinish = async () => {
+    setShowPrompt(false);
     setLoading(true);
-    const result = await completeSorting(route.params.house);
+    // Note: QuizScreen already calls completeSorting, but we call it here again
+    // to handle the edge case where QuizScreen failed or User re-enters this screen.
+    // The RPC handles the 'already sorted' check.
+    const result = await completeSorting(route.params.house, {}, {});
     setLoading(false);
-    if (result.error) {
+    if (result.error && result.error !== 'User is already sorted') {
       setErr(result.error);
       return;
     }
-    if (result.user) setUser(result.user);
+    // We fetch user again from AuthContext or just navigate
+    setUser(null); // Force reload
+  };
+
+  const enter = () => {
+    setShowPrompt(true);
   };
 
   return (
@@ -102,6 +113,11 @@ export function SortingCardScreen({ navigation, route }: Props) {
           </Text>
         </TouchableOpacity>
       </View>
+
+      <NotificationPrePrompt 
+        visible={showPrompt} 
+        onClose={handleFinish} 
+      />
     </View>
   );
 }

@@ -1,0 +1,8 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "app.connexa.mobile",
+    "sha256_cert_fingerprints": ["40:6C:1A:45:46:BD:4E:BB:30:17:05:4B:DD:82:0E:0D:A0:85:E5:E7:C8:17:63:04:14:0D:82:56:5E:A0:A6:91"]
+  }
+}]

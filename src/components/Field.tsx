@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, TextInput, Text, ViewStyle } from 'react-native';
+import { View, TextInput, Text, ViewStyle, Platform } from 'react-native';
 import { colors, fonts } from '@/tokens';
 import { Eyebrow } from '@/components/Eyebrow';
 import { Icon } from '@/components/Icon';
@@ -36,13 +36,17 @@ export function Field({ label, value, onChange, placeholder, type = 'default', e
           autoCapitalize="none"
           onFocus={() => setFocus(true)}
           onBlur={() => setFocus(false)}
-          style={{
-            fontFamily: fonts.body,
-            fontSize: 17,
-            color: colors.ink,
-            letterSpacing: 0.09,
-            padding: 0,
-          }}
+          style={[
+            {
+              fontFamily: fonts.body,
+              fontSize: 17,
+              color: colors.ink,
+              letterSpacing: 0.09,
+              padding: 0,
+            },
+            // RN-web renders TextInput as <input>; kill the browser focus outline.
+            Platform.OS === 'web' ? ({ outlineStyle: 'none' } as object) : null,
+          ]}
         />
       </View>
       {!!error && (

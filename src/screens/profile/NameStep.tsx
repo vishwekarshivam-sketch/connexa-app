@@ -9,20 +9,35 @@ import { Title } from '@/components/Title';
 import { Body } from '@/components/Body';
 import { Field } from '@/components/Field';
 import { Button } from '@/components/Button';
+import { useAuth } from '@/context/AuthContext';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'ProfileName'>;
 
 export function NameStep({ navigation }: Props) {
-  const [name, setName] = useState('');
+  const { user, updateUser } = useAuth();
+  const [name, setName] = useState(user?.display_name ?? '');
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState('');
   const ok = name.trim().length > 0;
+
+  const submit = async () => {
+    setSaving(true);
+    const { error } = await updateUser({ display_name: name.trim() });
+    setSaving(false);
+    if (error) {
+      setErr(error);
+      return;
+    }
+    navigation.navigate('ProfilePhoto');
+  };
 
   return (
     <Screen footer={
       <Button 
-        onPress={() => navigation.navigate('ProfilePhoto')} 
-        disabled={!ok}
+        onPress={submit} 
+        disabled={!ok || saving}
       >
-        Continue
+        {saving ? 'Saving...' : 'Continue'}
       </Button>
     }>
       <TopBar onBack={navigation.goBack}>
@@ -40,7 +55,8 @@ export function NameStep({ navigation }: Props) {
           value={name} 
           placeholder="Your name" 
           autoFocus 
-          onChange={setName} 
+          error={err}
+          onChange={(v) => { setName(v); if (err) setErr(''); }} 
         />
       </View>
     </Screen>

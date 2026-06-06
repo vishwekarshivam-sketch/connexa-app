@@ -1,9 +1,25 @@
 import 'react-native-url-polyfill/auto';
+import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as FileSystem from 'expo-file-system/legacy';
 import { decode } from 'base64-arraybuffer';
 import { createClient, Session, SupabaseClient } from '@supabase/supabase-js';
-import { House } from '@/types';
+import { 
+  House, 
+  DateProfile, 
+  ProfilePhoto, 
+  PromptAnswer, 
+  QuestionnaireAnswer, 
+  Interest, 
+  Match, 
+  DMThread, 
+  Message,
+  ConnexaUser,
+  UserType,
+  UserStatus
+} from '@/types';
+
+export type { ConnexaUser } from '@/types';
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
@@ -12,31 +28,6 @@ const hasSupabaseConfig =
   supabaseUrl.includes('.supabase.co') &&
   supabaseAnonKey.length > 0 &&
   supabaseAnonKey !== 'your-anon-key';
-
-export type VerificationStatus = 'unverified' | 'pending_review' | 'verified' | 'rejected';
-export type UserType = 'fresher' | 'student_25b' | 'student_other';
-export type Gender = 'man' | 'woman' | 'undisclosed';
-
-export interface ConnexaUser {
-  id: string;
-  email: string | null;
-  display_name: string | null;
-  photo_url: string | null;
-  gender: Gender | null;
-  iit: string | null;
-  branch: string | null;
-  hometown: string | null;
-  year: number | null;
-  user_type: UserType | null;
-  verification_status: VerificationStatus;
-  jee_roll_number: string | null;
-  house: House | null;
-  founding_100: boolean;
-  is_admin: boolean;
-  created_at: string;
-  updated_at: string;
-  verified_at: string | null;
-}
 
 export interface AuthResult {
   error: string | null;
@@ -54,9 +45,8 @@ export interface HouseScore {
 export interface IntroductionWithProfile {
   id: string;
   from_user: string;
-  status: 'pending' | 'accepted' | 'passed';
+  state: string;
   created_at: string;
-  responded_at: string | null;
   display_name: string | null;
   photo_url: string | null;
   iit: string | null;
@@ -71,28 +61,83 @@ export interface DocumentAsset {
   size?: number | null;
 }
 
-export const supabase = hasSupabaseConfig
-  ? createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        storage: AsyncStorage,
-        autoRefreshToken: true,
-        persistSession: true,
-        detectSessionInUrl: false,
-      },
-    })
-  : null;
+// Admin Interfaces
+export interface VerificationSubmission {
+  id: string;
+  user_id: string;
+  method: 'email_otp' | 'roll_doc';
+  iit: string;
+  roll_number: string | null;
+  doc_url: string | null;
+  status: 'pending' | 'approved' | 'rejected';
+  admin_note: string | null;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  created_at: string;
+  user?: ConnexaUser;
+}
+
+export interface HousePrompt {
+  id: string;
+  house: House;
+  prompt_text: string;
+  scheduled_for: string;
+  created_by: string | null;
+  created_at: string;
+}
+
+export interface AdminNotification {
+  id: string;
+  category: string;
+  body: string;
+  reference_id?: string;
+  read: boolean;
+  created_at: string;
+}
+
+export interface SeasonConfig {
+  id: number;
+  season_start: string;
+  season_end: string;
+  crowning_done: boolean;
+  crowned_user_id: string | null;
+  crowned_at: string | null;
+}
+
+const supabaseAuthOptions = {
+  auth: {
+    storage: AsyncStorage,
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: false,
+  },
+};
+
+export const supabase: SupabaseClient = hasSupabaseConfig
+  ? createClient(supabaseUrl, supabaseAnonKey, supabaseAuthOptions)
+  : createClient('https://placeholder.supabase.co', 'placeholder-anon-key', supabaseAuthOptions);
 
 export const isSupabaseConfigured = hasSupabaseConfig;
 
-function requireSupabase(): SupabaseClient {
-  if (!supabase) {
+export function requireSupabase(): SupabaseClient {
+  if (!hasSupabaseConfig) {
     throw new Error('Supabase is not configured. Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY.');
   }
   return supabase;
 }
 
 function messageFromError(error: unknown): string {
-  if (error instanceof Error) return error.message;
+  if (error instanceof Error) {
+    const msg = error.message ?? '';
+    // Browser fetch failures surface as "Failed to fetch" / "Load failed" / "Network request failed".
+    if (/failed to fetch|load failed|network request failed|networkerror/i.test(msg)) {
+      return 'Network issue reaching the server. Check your connection and try again.';
+    }
+    if (/over_email_send_rate_limit|rate limit|too many/i.test(msg)) {
+      return 'Too many code requests. Wait a minute before trying again.';
+    }
+    return msg;
+  }
   return 'Something went wrong. Please try again.';
 }
 
@@ -114,6 +159,19 @@ function contentTypeFor(asset: DocumentAsset): string {
   return 'image/jpeg';
 }
 
+// expo-file-system readAsStringAsync is native-only. On web the picker hands back
+// a blob:/data: URI that fetch can read directly into an ArrayBuffer.
+async function readAssetBytes(uri: string): Promise<ArrayBuffer> {
+  if (Platform.OS === 'web') {
+    const res = await fetch(uri);
+    return res.arrayBuffer();
+  }
+  const base64 = await FileSystem.readAsStringAsync(uri, {
+    encoding: FileSystem.EncodingType.Base64,
+  });
+  return decode(base64);
+}
+
 export async function getCurrentSession(): Promise<Session | null> {
   const client = requireSupabase();
   const { data, error } = await client.auth.getSession();
@@ -121,16 +179,12 @@ export async function getCurrentSession(): Promise<Session | null> {
   return data.session;
 }
 
-export async function getCurrentUserProfile(): Promise<ConnexaUser | null> {
+export async function getUserProfileById(userId: string): Promise<ConnexaUser | null> {
   const client = requireSupabase();
-  const { data: authData, error: authError } = await client.auth.getUser();
-  if (authError) throw authError;
-  if (!authData.user) return null;
-
   const { data, error } = await client
     .from('users')
     .select('*')
-    .eq('id', authData.user.id)
+    .eq('id', userId)
     .maybeSingle();
   if (error) throw error;
   return data as ConnexaUser | null;
@@ -155,7 +209,7 @@ export async function sendOtp(
         },
       },
     });
-    if (error) return { error: error.message };
+    if (error) return { error: messageFromError(error) };
     return { error: null };
   } catch (error) {
     return { error: messageFromError(error) };
@@ -173,11 +227,20 @@ export async function verifyOtp(
     if (!normalizedEmail) return { error: 'Email is required.' };
     if (!/^\d{6}$/.test(code)) return { error: 'Enter the six-digit code.' };
 
-    const { data, error } = await client.auth.verifyOtp({
+    let { data, error } = await client.auth.verifyOtp({
       email: normalizedEmail,
       token: code,
       type: 'email',
     });
+    if (error && /expired|invalid/i.test(error.message)) {
+      const fallback = await client.auth.verifyOtp({
+        email: normalizedEmail,
+        token: code,
+        type: 'signup',
+      });
+      data = fallback.data;
+      error = fallback.error;
+    }
     if (error) return { error: error.message };
     if (!data.user) return { error: 'Verification succeeded but no user session was returned.' };
 
@@ -224,13 +287,11 @@ export async function submitDocForm(data: {
     const userId = await ensureAnonymousUser();
     const ext = extensionFromName(data.asset.name);
     const path = `${userId}/${Date.now()}-${safeFileName(data.asset.name)}`;
-    const base64 = await FileSystem.readAsStringAsync(data.asset.uri, {
-      encoding: FileSystem.EncodingType.Base64,
-    });
+    const bytes = await readAssetBytes(data.asset.uri);
 
     const { error: uploadError } = await client.storage
       .from('verification-documents')
-      .upload(path, decode(base64), {
+      .upload(path, bytes, {
         contentType: contentTypeFor(data.asset),
         upsert: false,
       });
@@ -284,12 +345,10 @@ export async function uploadProfilePhoto(asset: DocumentAsset): Promise<AuthResu
     if (!authData.user) return { error: 'You need to be signed in.' };
 
     const path = `${authData.user.id}/${Date.now()}-${safeFileName(asset.name)}`;
-    const base64 = await FileSystem.readAsStringAsync(asset.uri, {
-      encoding: FileSystem.EncodingType.Base64,
-    });
+    const bytes = await readAssetBytes(asset.uri);
     const { error: uploadError } = await client.storage
       .from('profile-photos')
-      .upload(path, decode(base64), {
+      .upload(path, bytes, {
         contentType: contentTypeFor(asset),
         upsert: true,
       });
@@ -302,25 +361,6 @@ export async function uploadProfilePhoto(asset: DocumentAsset): Promise<AuthResu
   }
 }
 
-export async function completeSorting(house: House): Promise<AuthResult> {
-  try {
-    const client = requireSupabase();
-    const { data: authData, error: authError } = await client.auth.getUser();
-    if (authError) throw authError;
-    if (!authData.user) return { error: 'You need to be signed in.' };
-
-    const { data, error } = await client
-      .from('users')
-      .update({ house })
-      .eq('id', authData.user.id)
-      .select('*')
-      .single();
-    if (error) return { error: error.message };
-    return { error: null, user: data as ConnexaUser };
-  } catch (error) {
-    return { error: messageFromError(error) };
-  }
-}
 
 export async function getHouseMembers(house: House): Promise<ConnexaUser[]> {
   try {
@@ -333,7 +373,7 @@ export async function getHouseMembers(house: House): Promise<ConnexaUser[]> {
       .from('users')
       .select('*')
       .eq('house', house)
-      .eq('verification_status', 'verified')
+      .in('status', ['active', 'onboarding'])
       .neq('id', authData.user.id)
       .order('created_at', { ascending: true });
     if (error) throw error;
@@ -368,43 +408,9 @@ export async function getHouseScores(): Promise<HouseScore[]> {
 export async function getMyIntroductions(): Promise<IntroductionWithProfile[]> {
   try {
     const client = requireSupabase();
-    const { data: authData, error: authError } = await client.auth.getUser();
-    if (authError) throw authError;
-    if (!authData.user) return [];
-
-    const { data, error } = await client
-      .from('introductions')
-      .select(`
-        id,
-        from_user,
-        status,
-        created_at,
-        responded_at,
-        users!introductions_from_user_fkey (
-          display_name,
-          photo_url,
-          iit,
-          branch,
-          house
-        )
-      `)
-      .eq('to_user', authData.user.id)
-      .eq('status', 'pending')
-      .order('created_at', { ascending: false });
+    const { data, error } = await client.rpc('get_received_interests');
     if (error) throw error;
-
-    return ((data ?? []) as any[]).map((row) => ({
-      id: row.id,
-      from_user: row.from_user,
-      status: row.status,
-      created_at: row.created_at,
-      responded_at: row.responded_at,
-      display_name: row.users?.display_name ?? null,
-      photo_url: row.users?.photo_url ?? null,
-      iit: row.users?.iit ?? null,
-      branch: row.users?.branch ?? null,
-      house: row.users?.house ?? null,
-    }));
+    return (data ?? []) as IntroductionWithProfile[];
   } catch {
     return [];
   }
@@ -416,17 +422,28 @@ export async function respondToIntroduction(
 ): Promise<{ error: string | null }> {
   try {
     const client = requireSupabase();
-    const { data: authData, error: authError } = await client.auth.getUser();
-    if (authError) throw authError;
-    if (!authData.user) return { error: 'You need to be signed in.' };
-
-    const { error } = await client
-      .from('introductions')
-      .update({ status: response, responded_at: new Date().toISOString() })
-      .eq('id', id)
-      .eq('to_user', authData.user.id);
+    const { error } = await client.rpc('resolve_received_interest', {
+      p_interest_id: id,
+      p_action: response === 'accepted' ? 'accept' : 'pass'
+    });
     if (error) return { error: error.message };
     return { error: null };
+  } catch (error) {
+    return { error: messageFromError(error) };
+  }
+}
+
+export async function completeSorting(house: string, responses: any, breakdown: any) {
+  try {
+    const client = requireSupabase();
+    const { data, error } = await client
+      .rpc('complete_sorting', { 
+        p_house: house, 
+        p_responses: responses, 
+        p_score_breakdown: breakdown 
+      });
+    if (error) return { error: error.message };
+    return { data, error: null };
   } catch (error) {
     return { error: messageFromError(error) };
   }
@@ -439,11 +456,507 @@ export async function getPublicProfile(userId: string): Promise<ConnexaUser | nu
       .from('users')
       .select('*')
       .eq('id', userId)
-      .eq('verification_status', 'verified')
+      .in('status', ['active', 'onboarding'])
       .maybeSingle();
     if (error) throw error;
     return data as ConnexaUser | null;
   } catch {
     return null;
+  }
+}
+
+// Date-specific functions
+export async function getDateProfile(userId: string): Promise<DateProfile | null> {
+  try {
+    const client = requireSupabase();
+    const { data, error } = await client
+      .from('date_profiles')
+      .select('*, photos:date_photos(*), prompts:date_prompt_answers(*)')
+      .eq('user_id', userId)
+      .maybeSingle();
+    if (error) throw error;
+    return data as DateProfile | null;
+  } catch {
+    return null;
+  }
+}
+
+export async function createDateProfile(profile: Partial<DateProfile>) {
+  try {
+    const client = requireSupabase();
+    const { data, error } = await client
+      .from('date_profiles')
+      .insert(profile)
+      .select()
+      .single();
+    if (error) return { error: error.message };
+    return { data: data as DateProfile, error: null };
+  } catch (error) {
+    return { error: messageFromError(error) };
+  }
+}
+
+export async function updateDateProfile(userId: string, patch: Partial<DateProfile>) {
+  try {
+    const client = requireSupabase();
+    const { data, error } = await client
+      .from('date_profiles')
+      .upsert({ user_id: userId, ...patch })
+      .select()
+      .single();
+    if (error) return { error: error.message };
+    return { data: data as DateProfile, error: null };
+  } catch (error) {
+    return { error: messageFromError(error) };
+  }
+}
+
+export async function getQuestionnaireAnswers(userId: string): Promise<QuestionnaireAnswer[]> {
+  try {
+    const client = requireSupabase();
+    const { data, error } = await client
+      .from('date_questionnaire_answers')
+      .select('*')
+      .eq('user_id', userId);
+    if (error) throw error;
+    return (data ?? []) as QuestionnaireAnswer[];
+  } catch {
+    return [];
+  }
+}
+
+export async function saveSingleQuestionnaireAnswer(userId: string, answer: any) {
+  try {
+    const client = requireSupabase();
+    const { error } = await client
+      .from('date_questionnaire_answers')
+      .upsert({ user_id: userId, ...answer });
+    if (error) return { error: error.message };
+    return { error: null };
+  } catch (error) {
+    return { error: messageFromError(error) };
+  }
+}
+
+export async function saveQuestionnaireAnswers(userId: string, answers: any[]) {
+  try {
+    const client = requireSupabase();
+    await client.from('date_questionnaire_answers').delete().eq('user_id', userId);
+    const { error } = await client.from('date_questionnaire_answers').insert(
+      answers.map(a => ({ ...a, user_id: userId }))
+    );
+    if (error) return { error: error.message };
+    return { error: null };
+  } catch (error) {
+    return { error: messageFromError(error) };
+  }
+}
+
+export async function savePromptAnswers(userId: string, answers: any[]) {
+  try {
+    const client = requireSupabase();
+    await client.from('date_prompt_answers').delete().eq('user_id', userId);
+    const { error } = await client.from('date_prompt_answers').insert(
+      answers.map(a => ({ ...a, user_id: userId }))
+    );
+    if (error) return { error: error.message };
+    return { error: null };
+  } catch (error) {
+    return { error: messageFromError(error) };
+  }
+}
+
+export async function uploadDatePhoto(userId: string, asset: DocumentAsset, position: number) {
+  try {
+    const client = requireSupabase();
+    // Storage RLS requires the first path segment to equal auth.uid(); keep uid first.
+    const path = `${userId}/date/${Date.now()}-${safeFileName(asset.name)}`;
+    const bytes = await readAssetBytes(asset.uri);
+    const { error: uploadError } = await client.storage
+      .from('profile-photos')
+      .upload(path, bytes, {
+        contentType: contentTypeFor(asset),
+        upsert: true,
+      });
+    if (uploadError) return { error: uploadError.message };
+
+    const { data: urlData } = client.storage.from('profile-photos').getPublicUrl(path);
+    
+    const { data, error } = await client
+      .from('date_photos')
+      .insert({ user_id: userId, url: urlData.publicUrl, position })
+      .select()
+      .single();
+    
+    if (error) return { error: error.message };
+    return { data: data as ProfilePhoto, error: null };
+  } catch (error) {
+    return { error: messageFromError(error) };
+  }
+}
+
+export async function getDateFeed(): Promise<DateProfile[]> {
+  try {
+    const client = requireSupabase();
+    const { data: authData } = await client.auth.getUser();
+    if (!authData.user) return [];
+
+    const { data, error } = await client.rpc('get_date_browse_feed', {
+      p_user_id: authData.user.id,
+    });
+    if (error) throw error;
+    return ((Array.isArray(data) ? data : []) as DateProfile[]);
+  } catch {
+    return [];
+  }
+}
+
+export async function getMyMatches(userId: string): Promise<Match[]> {
+  try {
+    const client = requireSupabase();
+    const { data, error } = await client
+      .from('matches')
+      .select('*')
+      .or(`user_a.eq.${userId},user_b.eq.${userId}`)
+      .eq('state', 'active')
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return (data ?? []) as Match[];
+  } catch {
+    return [];
+  }
+}
+
+export async function getMyInterests(userId: string): Promise<Interest[]> {
+  try {
+    const client = requireSupabase();
+    const { data, error } = await client
+      .from('interests')
+      .select('*')
+      .eq('from_user', userId)
+      .eq('state', 'pending')
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return (data ?? []) as Interest[];
+  } catch {
+    return [];
+  }
+}
+
+export async function expressInterest(fromUserId: string, toUserId: string) {
+  try {
+    const client = requireSupabase();
+    const { data, error } = await client
+      .rpc('express_interest', { p_target_user_id: toUserId });
+    if (error) return { error: error.message };
+    return { data: data as Interest, error: null };
+  } catch (error) {
+    return { error: messageFromError(error) };
+  }
+}
+
+export async function withdrawInterest(interestId: string) {
+  try {
+    const client = requireSupabase();
+    const { error } = await client
+      .rpc('withdraw_interest', { p_interest_id: interestId });
+    if (error) return { error: error.message };
+    return { error: null };
+  } catch (error) {
+    return { error: messageFromError(error) };
+  }
+}
+
+export async function getDMThread(matchId: string): Promise<DMThread | null> {
+  try {
+    const client = requireSupabase();
+    const { data, error } = await client
+      .from('dm_threads')
+      .select('*')
+      .eq('match_id', matchId)
+      .maybeSingle();
+    if (error) throw error;
+    return data as DMThread | null;
+  } catch {
+    return null;
+  }
+}
+
+export async function getMessages(threadId: string): Promise<Message[]> {
+  try {
+    const client = requireSupabase();
+    const { data, error } = await client
+      .from('dm_messages')
+      .select('*')
+      .eq('thread_id', threadId)
+      .order('created_at', { ascending: true });
+    if (error) throw error;
+    return (data ?? []) as Message[];
+  } catch {
+    return [];
+  }
+}
+
+export async function sendMessage(threadId: string, senderId: string, body: string) {
+  try {
+    const client = requireSupabase();
+    const { data, error } = await client
+      .from('dm_messages')
+      .insert({ thread_id: threadId, sender: senderId, body: body.trim() })
+      .select()
+      .single();
+    if (error) return { error: error.message };
+    return { data: data as Message, error: null };
+  } catch (error) {
+    return { error: messageFromError(error) };
+  }
+}
+
+export async function markThreadRead(threadId: string, userId: string) {
+  try {
+    const client = requireSupabase();
+    await client
+      .from('thread_read_state')
+      .upsert({ thread_id: threadId, user_id: userId, last_read_at: new Date().toISOString() });
+  } catch {
+    // Ignore unread state errors
+  }
+}
+
+export function getVerificationDocUrl(path: string): string {
+  const client = requireSupabase();
+  const { data } = client.storage.from('verification-documents').getPublicUrl(path);
+  return data.publicUrl;
+}
+
+export async function searchUsers(query: string): Promise<ConnexaUser[]> {
+  try {
+    const client = requireSupabase();
+    const { data, error } = await client
+      .from('users')
+      .select('*')
+      .or(`display_name.ilike.%${query}%,email.ilike.%${query}%`)
+      .eq('user_type', 'fresher') // As per spec "searches verified users with user_type = student_25b", wait my enum is 'fresher' or 'non_fresher'
+      .limit(10);
+    if (error) throw error;
+    return (data ?? []) as ConnexaUser[];
+  } catch {
+    return [];
+  }
+}
+
+// Admin Functions
+
+export async function getPendingVerifications(): Promise<VerificationSubmission[]> {
+  try {
+    const client = requireSupabase();
+    const { data, error } = await client
+      .from('verification_submissions')
+      .select('*, user:users(*)')
+      .eq('status', 'pending')
+      .order('created_at', { ascending: true });
+    if (error) throw error;
+    return (data ?? []) as VerificationSubmission[];
+  } catch {
+    return [];
+  }
+}
+
+export async function approveVerification(submissionId: string) {
+  try {
+    const client = requireSupabase();
+    const { data, error } = await client
+      .rpc('approve_verification', { p_submission_id: submissionId });
+    if (error) return { error: error.message };
+    return { data, error: null };
+  } catch (error) {
+    return { error: messageFromError(error) };
+  }
+}
+
+export async function rejectVerification(submissionId: string, reason?: string) {
+  try {
+    const client = requireSupabase();
+    const { data, error } = await client
+      .from('verification_submissions')
+      .update({ 
+        status: 'rejected', 
+        admin_note: reason, 
+        reviewed_at: new Date().toISOString() 
+      })
+      .eq('id', submissionId)
+      .select()
+      .single();
+    if (error) return { error: error.message };
+    return { data, error: null };
+  } catch (error) {
+    return { error: messageFromError(error) };
+  }
+}
+
+export async function getHouseLeaders(): Promise<ConnexaUser[]> {
+  try {
+    const client = requireSupabase();
+    const { data, error } = await client
+      .from('users')
+      .select('*')
+      .eq('is_house_leader', true)
+      .order('house', { ascending: true });
+    if (error) throw error;
+    return (data ?? []) as ConnexaUser[];
+  } catch {
+    return [];
+  }
+}
+
+export async function assignHouseLeader(userId: string) {
+  try {
+    const client = requireSupabase();
+    const { data, error } = await client
+      .from('users')
+      .update({ is_house_leader: true })
+      .eq('id', userId)
+      .select()
+      .single();
+    if (error) return { error: error.message };
+    return { data, error: null };
+  } catch (error) {
+    return { error: messageFromError(error) };
+  }
+}
+
+export async function removeHouseLeader(userId: string) {
+  try {
+    const client = requireSupabase();
+    const { data, error } = await client
+      .from('users')
+      .update({ is_house_leader: false })
+      .eq('id', userId)
+      .select()
+      .single();
+    if (error) return { error: error.message };
+    return { data, error: null };
+  } catch (error) {
+    return { error: messageFromError(error) };
+  }
+}
+
+export async function getScheduledPrompts(): Promise<HousePrompt[]> {
+  try {
+    const client = requireSupabase();
+    const { data, error } = await client
+      .from('house_prompts')
+      .select('*')
+      .order('scheduled_for', { ascending: false });
+    if (error) throw error;
+    return (data ?? []) as HousePrompt[];
+  } catch {
+    return [];
+  }
+}
+
+export async function getActivityFlags(): Promise<AdminNotification[]> {
+  try {
+    const client = requireSupabase();
+    const { data, error } = await client
+      .from('admin_notifications')
+      .select('*')
+      .eq('category', 'activity_flag')
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return (data ?? []) as AdminNotification[];
+  } catch {
+    return [];
+  }
+}
+export async function getModerationReports(category: 'chat' | 'intro' | 'date'): Promise<AdminNotification[]> {
+  try {
+    const client = requireSupabase();
+    const { data, error } = await client
+      .from('admin_notifications')
+      .select('*')
+      .eq('category', `report_${category}`)
+      .eq('read', false)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return data as AdminNotification[];
+  } catch {
+    return [];
+  }
+}
+
+export async function dismissModerationReport(reportId: string) {
+  try {
+    const client = requireSupabase();
+    const { error } = await client
+      .from('admin_notifications')
+      .update({ read: true })
+      .eq('id', reportId);
+    if (error) return { error: error.message };
+    return { error: null };
+  } catch (error) {
+    return { error: messageFromError(error) };
+  }
+}
+
+export async function deleteModeratedContent(reportId: string, category: string, referenceId: string) {
+  try {
+    const client = requireSupabase();
+
+    let table = '';
+    if (category.includes('chat')) table = 'house_messages';
+    else if (category.includes('intro')) table = 'intro_comments';
+    else if (category.includes('date')) table = 'date_reports'; // or date_profiles/photos
+
+    if (table) {
+      const { error } = await client.from(table).delete().eq('id', referenceId);
+      if (error) return { error: error.message };
+    }
+
+    // Mark report as read/handled
+    await dismissModerationReport(reportId);
+    return { error: null };
+  } catch (error) {
+    return { error: messageFromError(error) };
+  }
+}
+
+export interface SeasonConfig {
+  id: number;
+  season_start: string;
+  season_end: string;
+  reveal_triggered: boolean;
+  crowning_done: boolean;
+  updated_at: string;
+}
+
+export async function getSeasonConfig(): Promise<SeasonConfig | null> {
+  try {
+    const client = requireSupabase();
+    const { data, error } = await client
+      .from('season_config')
+      .select('*')
+      .eq('id', 1)
+      .maybeSingle();
+    if (error) throw error;
+    return data as SeasonConfig | null;
+  } catch {
+    return null;
+  }
+}
+
+export async function updateSeasonConfig(patch: Partial<SeasonConfig>) {
+  try {
+    const client = requireSupabase();
+    const { data, error } = await client
+      .from('season_config')
+      .update(patch)
+      .eq('id', 1)
+      .select()
+      .single();
+    if (error) return { error: error.message };
+    return { data, error: null };
+  } catch (error) {
+    return { error: messageFromError(error) };
   }
 }

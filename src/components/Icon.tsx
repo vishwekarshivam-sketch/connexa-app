@@ -1,15 +1,25 @@
+import { StyleProp, ViewStyle } from 'react-native';
 import Svg, { Path, Line, Rect, Circle, Polygon, Polyline, G } from 'react-native-svg';
+import * as Lucide from 'lucide-react-native';
+import { iconSizes } from '@/tokens';
 
 export type IconName =
   | 'door' | 'chairs' | 'letter' | 'page' | 'lamp' | 'moon'
-  | 'seal' | 'window' | 'upload' | 'check'
-  | 'chevronRight' | 'chevronLeft' | 'chevronDown' | 'arrowRight';
+  | 'seal' | 'window' | 'upload' | 'check' | 'mark' | 'moreHorizontal'
+  | 'navHouse' | 'navIntroductions' | 'navLeaderboard' | 'navDate' | 'navProfile'
+  | 'chevronRight' | 'chevronLeft' | 'chevronDown' | 'arrowRight'
+  | 'shield' | 'users' | 'messageSquare' | 'bookOpen' | 'flag' | 'shieldOff' | 'settings'
+  | 'bell' | 'x' | 'fileText' | 'edit' | 'trash' | 'user' | 'moreVertical' | 'barChart2' | 'heart' | 'plus'
+  | 'wifiOff' | 'alertTriangle';
+
+export type IconSizeToken = keyof typeof iconSizes;
 
 interface Props { 
   name: IconName; 
-  size?: number; 
+  size?: number | IconSizeToken; 
   color?: string; 
   strokeWidth?: number;
+  style?: StyleProp<ViewStyle>;
 }
 
 const STROKE = { 
@@ -18,11 +28,50 @@ const STROKE = {
   strokeLinejoin: 'miter' as const 
 };
 
-export function Icon({ name, size = 22, color = 'currentColor', strokeWidth = 1.5 }: Props) {
+// Map custom names to Lucide components where applicable
+const lucideMap: Partial<Record<IconName, any>> = {
+  check: Lucide.Check,
+  moreHorizontal: Lucide.MoreHorizontal,
+  chevronRight: Lucide.ChevronRight,
+  chevronLeft: Lucide.ChevronLeft,
+  chevronDown: Lucide.ChevronDown,
+  arrowRight: Lucide.ArrowRight,
+  shield: Lucide.Shield,
+  users: Lucide.Users,
+  messageSquare: Lucide.MessageSquare,
+  bookOpen: Lucide.BookOpen,
+  flag: Lucide.Flag,
+  shieldOff: Lucide.ShieldOff,
+  settings: Lucide.Settings,
+  bell: Lucide.Bell,
+  x: Lucide.X,
+  fileText: Lucide.FileText,
+  edit: Lucide.Edit2,
+  trash: Lucide.Trash2,
+  user: Lucide.User,
+  moreVertical: Lucide.MoreVertical,
+  upload: Lucide.Upload,
+  barChart2: Lucide.BarChart2,
+  heart: Lucide.Heart,
+  plus: Lucide.Plus,
+  wifiOff: Lucide.WifiOff,
+  alertTriangle: Lucide.AlertTriangle,
+};
+
+export function Icon({ name, size = 'md', color = 'currentColor', strokeWidth = 1.5, style }: Props) {
+  const pixelSize = typeof size === 'number' ? size : iconSizes[size] || 20;
+
+  // Use Lucide if mapped
+  const LucideIcon = lucideMap[name];
+  if (LucideIcon) {
+    return <LucideIcon color={color} size={pixelSize} strokeWidth={strokeWidth} style={style} />;
+  }
+
+  // Custom Connexa Icons fallback
   const s = { stroke: color, strokeWidth };
   const props = { ...STROKE, ...s };
 
-  const paths: Record<IconName, React.ReactNode> = {
+  const paths: Partial<Record<IconName, React.ReactNode>> = {
     door: (
       <G {...props}>
         <Line x1="16.5" y1="4" x2="16.5" y2="20" />
@@ -75,27 +124,67 @@ export function Icon({ name, size = 22, color = 'currentColor', strokeWidth = 1.
         <Line x1="5" y1="12" x2="19" y2="12" />
       </G>
     ),
-    upload: (
+    navHouse: (
       <G {...props}>
-        <Path d="M12 16 V5" />
-        <Path d="M7.5 9.5 L12 5 L16.5 9.5" />
-        <Path d="M5 16 V20 H19 V16" />
+        <Rect x="4" y="5" width="16" height="14" />
+        <Line x1="4" y1="10" x2="20" y2="10" />
+        <Line x1="12" y1="5" x2="12" y2="19" />
+        <Line x1="7" y1="19" x2="17" y2="19" />
       </G>
     ),
-    check: <Path {...props} d="M5 12.5 L10 17.5 L19 6.5" />,
-    chevronRight: <Path {...props} d="M9 5 L16 12 L9 19" />,
-    chevronLeft: <Path {...props} d="M15 5 L8 12 L15 19" />,
-    chevronDown: <Path {...props} d="M5 9 L12 16 L19 9" />,
-    arrowRight: (
+    navIntroductions: (
       <G {...props}>
-        <Line x1="4" y1="12" x2="20" y2="12" />
-        <Path d="M14 6 L20 12 L14 18" />
+        <Rect x="4" y="3" width="13" height="18" />
+        <Path d="M17 3 L20 5 L20 21 L17 21" />
+        <Line x1="14" y1="12" x2="15" y2="12" />
+      </G>
+    ),
+    navLeaderboard: (
+      <G {...props}>
+        <Rect x="5" y="3" width="14" height="18" />
+        <Line x1="8" y1="8" x2="16" y2="8" />
+        <Line x1="8" y1="12" x2="14" y2="12" />
+        <Line x1="8" y1="16" x2="12" y2="16" />
+        <Line x1="5" y1="6" x2="3" y2="6" />
+        <Line x1="5" y1="10" x2="3" y2="10" />
+        <Line x1="5" y1="14" x2="3" y2="14" />
+      </G>
+    ),
+    navDate: (
+      <G {...props}>
+        <Line x1="3" y1="8" x2="3" y2="14" />
+        <Line x1="3" y1="14" x2="7" y2="14" />
+        <Line x1="3" y1="8" x2="7" y2="8" />
+        <Line x1="7" y1="8" x2="7" y2="14" />
+        <Line x1="3" y1="14" x2="3" y2="19" />
+        <Line x1="7" y1="14" x2="7" y2="19" />
+        <Line x1="21" y1="8" x2="21" y2="14" />
+        <Line x1="17" y1="14" x2="21" y2="14" />
+        <Line x1="17" y1="8" x2="21" y2="8" />
+        <Line x1="17" y1="8" x2="17" y2="14" />
+        <Line x1="17" y1="14" x2="17" y2="19" />
+        <Line x1="21" y1="14" x2="21" y2="19" />
+      </G>
+    ),
+    navProfile: (
+      <G {...props}>
+        <Rect x="4" y="5" width="16" height="14" />
+        <Line x1="7" y1="10" x2="13" y2="10" />
+        <Line x1="7" y1="14" x2="17" y2="14" />
+        <Line x1="15" y1="9" x2="17" y2="9" />
+        <Line x1="15" y1="11" x2="17" y2="11" />
+      </G>
+    ),
+    mark: (
+      <G {...props}>
+        <Path d="M12 3 L20 8 V16 L12 21 L4 16 V8 Z" />
+        <Path d="M8.5 12 L11 14.5 L15.8 9.5" />
       </G>
     ),
   };
 
   return (
-    <Svg width={size} height={size} viewBox="0 0 24 24">
+    <Svg width={pixelSize} height={pixelSize} viewBox="0 0 24 24" style={style}>
       {paths[name]}
     </Svg>
   );

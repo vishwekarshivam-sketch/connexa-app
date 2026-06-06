@@ -1,0 +1,10 @@
+supabase/functions/send-notifications/index.ts(12,30): error TS2307: Cannot find module 'jsr:@supabase/supabase-js@2' or its corresponding type declarations.
+supabase/functions/send-notifications/index.ts(13,26): error TS2307: Cannot find module 'jsr:@negrel/webpush@0.3' or its corresponding type declarations.
+supabase/functions/send-notifications/index.ts(19,1): error TS2304: Cannot find name 'Deno'.
+supabase/functions/send-notifications/index.ts(19,19): error TS7006: Parameter 'req' implicitly has an 'any' type.
+supabase/functions/send-notifications/index.ts(21,26): error TS2304: Cannot find name 'Deno'.
+supabase/functions/send-notifications/index.ts(27,23): error TS2304: Cannot find name 'Deno'.
+supabase/functions/send-notifications/index.ts(28,22): error TS2304: Cannot find name 'Deno'.
+supabase/functions/send-notifications/index.ts(212,23): error TS2304: Cannot find name 'Deno'.
+supabase/functions/send-notifications/index.ts(213,24): error TS2304: Cannot find name 'Deno'.
+supabase/functions/send-notifications/index.ts(214,21): error TS2304: Cannot find name 'Deno'.

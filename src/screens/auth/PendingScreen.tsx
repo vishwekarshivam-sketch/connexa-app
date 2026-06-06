@@ -1,15 +1,24 @@
-import { View, Text, TouchableOpacity, Linking } from 'react-native';
+import { useEffect } from 'react';
+import { View, Text, Linking } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '@/types';
 import { colors, fonts } from '@/tokens';
 import { Screen } from '@/components/Screen';
 import { Eyebrow } from '@/components/Eyebrow';
 import { Icon } from '@/components/Icon';
+import { useAuth } from '@/context/AuthContext';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Pending'>;
 
 export function PendingScreen({ navigation, route }: Props) {
-  const { displayName, iitLabel, roll } = route.params;
+  const { displayName, iitLabel, roll, email } = route.params;
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (user?.status === 'onboarding' || user?.status === 'active') {
+      navigation.replace('ProfileName');
+    }
+  }, [navigation, user?.status]);
 
   return (
     <Screen>
@@ -50,7 +59,8 @@ export function PendingScreen({ navigation, route }: Props) {
           {[
             ['Institute', iitLabel], 
             ['Name', displayName], 
-            ['Roll number', roll]
+            ['Roll number', roll],
+            ['Email', email ?? user?.email ?? '']
           ].map(([k, v]) => (
             <View key={k} style={{ 
               flexDirection: 'row', 
@@ -92,22 +102,6 @@ export function PendingScreen({ navigation, route }: Props) {
           {'.'}
         </Text>
       </View>
-
-      {/* Dev shortcut — remove before release */}
-      <TouchableOpacity 
-        onPress={() => navigation.navigate('ProfileName')} 
-        style={{ paddingVertical: 6, flexDirection: 'row', alignItems: 'center', gap: 8 }}
-      >
-        <View style={{ width: 18, height: 1, backgroundColor: colors.hairline }} />
-        <Text style={{ 
-          fontFamily: fonts.body, 
-          fontStyle: 'italic', 
-          fontSize: 13, 
-          color: colors.inkWhisper 
-        }}>
-          Preview: simulate approval
-        </Text>
-      </TouchableOpacity>
     </Screen>
   );
 }

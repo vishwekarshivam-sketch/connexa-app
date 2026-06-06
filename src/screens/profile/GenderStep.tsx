@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { AuthStackParamList } from '@/types';
+import { AuthStackParamList, Gender } from '@/types';
 import { colors, fonts } from '@/tokens';
 import { Screen } from '@/components/Screen';
 import { TopBar } from '@/components/TopBar';
@@ -10,26 +10,35 @@ import { Title } from '@/components/Title';
 import { Body } from '@/components/Body';
 import { Button } from '@/components/Button';
 import { Icon } from '@/components/Icon';
+import { useAuth } from '@/context/AuthContext';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'ProfileGender'>;
-type Gender = 'man' | 'woman' | 'undisclosed';
-
 const OPTS: [Gender, string][] = [
-  ['man', 'Man'], 
-  ['woman', 'Woman'], 
-  ['undisclosed', 'Prefer not to say']
+  ['male', 'Man'], 
+  ['female', 'Woman'], 
+  ['other', 'Prefer not to say']
 ];
 
 export function GenderStep({ navigation }: Props) {
-  const [g, setG] = useState<Gender | ''>('');
+  const { user, updateUser } = useAuth();
+  const [g, setG] = useState<Gender | ''>(user?.gender ?? '');
+  const [saving, setSaving] = useState(false);
+
+  const submit = async () => {
+    if (!g) return;
+    setSaving(true);
+    const { error } = await updateUser({ gender: g });
+    setSaving(false);
+    if (!error) navigation.navigate('ProfileBranch');
+  };
 
   return (
     <Screen footer={
       <Button 
-        onPress={() => navigation.navigate('ProfileBranch')} 
-        disabled={!g}
+        onPress={submit} 
+        disabled={!g || saving}
       >
-        Continue
+        {saving ? 'Saving...' : 'Continue'}
       </Button>
     }>
       <TopBar onBack={navigation.goBack}>

@@ -1,6 +1,8 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '@/types';
 import { SplashScreen } from '@/screens/auth/SplashScreen';
+import { LandingScreen } from '@/screens/auth/LandingScreen';
+import { LoginEmailScreen } from '@/screens/auth/LoginEmailScreen';
 import { UserTypeScreen } from '@/screens/auth/UserTypeScreen';
 import { FresherPathScreen } from '@/screens/auth/FresherPathScreen';
 import { FresherEmailScreen } from '@/screens/auth/FresherEmailScreen';
@@ -18,13 +20,22 @@ import { SortingInvitationScreen } from '@/screens/sorting/SortingInvitationScre
 import { SortingQuizScreen } from '@/screens/sorting/SortingQuizScreen';
 import { SortingRevealScreen } from '@/screens/sorting/SortingRevealScreen';
 import { SortingCardScreen } from '@/screens/sorting/SortingCardScreen';
+import { duration } from '@/tokens';
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 
 export function AuthNavigator() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false, animation: 'fade' }}>
+    <Stack.Navigator 
+      screenOptions={{ 
+        headerShown: false, 
+        animation: 'slide_from_right', // T1 Push
+        animationDuration: duration.standard,
+      }}
+    >
       <Stack.Screen name="Splash" component={SplashScreen} />
+      <Stack.Screen name="Landing" component={LandingScreen} />
+      <Stack.Screen name="LoginEmail" component={LoginEmailScreen} />
       <Stack.Screen name="UserType" component={UserTypeScreen} />
       <Stack.Screen name="FresherPath" component={FresherPathScreen} />
       <Stack.Screen name="FresherEmail" component={FresherEmailScreen} />
@@ -38,9 +49,17 @@ export function AuthNavigator() {
       <Stack.Screen name="ProfileBranch" component={BranchStep} />
       <Stack.Screen name="ProfileYear" component={YearStep} />
       <Stack.Screen name="ProfileDone" component={DoneScreen} />
-      <Stack.Screen name="SortingInvitation" component={SortingInvitationScreen} />
+      <Stack.Screen 
+        name="SortingInvitation" 
+        component={SortingInvitationScreen} 
+        options={{ animation: 'fade' }} // Contextual swap
+      />
       <Stack.Screen name="SortingQuiz" component={SortingQuizScreen} />
-      <Stack.Screen name="SortingReveal" component={SortingRevealScreen} />
+      <Stack.Screen 
+        name="SortingReveal" 
+        component={SortingRevealScreen} 
+        options={{ animation: 'fade' }} // Ceremony swap
+      />
       <Stack.Screen name="SortingCard" component={SortingCardScreen} />
     </Stack.Navigator>
   );

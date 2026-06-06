@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { ScrollView, View, Text, TouchableOpacity, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -7,7 +7,8 @@ import { ProfileStackParamList } from '@/types';
 import { colors, fonts } from '@/tokens';
 import { Eyebrow } from '@/components/Eyebrow';
 import { useAuth } from '@/context/AuthContext';
-import { getHouseMembers, ConnexaUser } from '@/lib/supabase';
+import { useHouseMembers } from '@/hooks/useHouseMembers';
+import { Skeleton } from '@/components/Skeleton';
 
 type Filter = 'All' | 'Your IIT' | 'Cross-IIT' | 'By Branch';
 const FILTERS: Filter[] = ['All', 'Your IIT', 'Cross-IIT', 'By Branch'];
@@ -16,13 +17,8 @@ export function DiscoverScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const navigation = useNavigation<NativeStackNavigationProp<ProfileStackParamList>>();
-  const [members, setMembers] = useState<ConnexaUser[]>([]);
+  const { data: members = [], isLoading } = useHouseMembers(user?.house || 'tinkerers');
   const [filter, setFilter] = useState<Filter>('All');
-
-  useEffect(() => {
-    if (!user?.house) return;
-    getHouseMembers(user.house).then(setMembers);
-  }, [user?.house]);
 
   const filtered = members.filter((m) => {
     if (filter === 'All') return true;
@@ -35,6 +31,10 @@ export function DiscoverScreen() {
     filter === 'By Branch'
       ? [...filtered].sort((a, b) => (a.branch ?? '').localeCompare(b.branch ?? ''))
       : filtered;
+
+  if (isLoading) {
+    return <DiscoverSkeleton insets={insets} />;
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.khadi, paddingTop: insets.top }}>
@@ -173,3 +173,31 @@ export function DiscoverScreen() {
     </View>
   );
 }
+
+function DiscoverSkeleton({ insets }: { insets: any }) {
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.khadi, paddingTop: insets.top }}>
+      <View style={{ padding: 24, paddingBottom: 12 }}>
+        <Skeleton width={180} height={32} style={{ marginBottom: 8 }} />
+      </View>
+      <View style={{ paddingHorizontal: 24, marginBottom: 24, flexDirection: 'row', gap: 8 }}>
+        {[1, 2, 3].map(i => (
+          <Skeleton key={i} width={80} height={32} radius={4} />
+        ))}
+      </View>
+      <View style={{ paddingHorizontal: 24 }}>
+        <Skeleton width={120} height={14} style={{ marginBottom: 20 }} />
+        {[1, 2, 3, 4, 5].map(i => (
+          <View key={i} style={{ flexDirection: 'row', gap: 14, paddingVertical: 18, borderBottomWidth: 1, borderBottomColor: colors.hairlineSoft }}>
+            <Skeleton width={48} height={48} radius={0} />
+            <View style={{ flex: 1, justifyContent: 'center', gap: 6 }}>
+              <Skeleton width="60%" height={18} />
+              <Skeleton width="40%" height={12} />
+            </View>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+

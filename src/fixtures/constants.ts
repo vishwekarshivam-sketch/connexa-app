@@ -27,4 +27,4 @@ export const BRANCHES = [
   { label: 'Other', value: 'other' },
 ];
 
-export const FRESHER_FORM_URL = 'https://forms.gle/REPLACE_WITH_REAL_URL';
+export const FRESHER_FORM_URL = process.env.EXPO_PUBLIC_FRESHER_FORM_URL || 'https://forms.gle/i3Uty2YHKrbvTULZ8';
