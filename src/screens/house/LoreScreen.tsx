@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   loreText: {
-    fontFamily: fonts.body,
+    fontFamily: fonts.bodyItalic,
     fontSize: 20,
     lineHeight: 30,
     color: colors.ink,
@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   previousText: {
-    fontFamily: fonts.body,
+    fontFamily: fonts.bodyItalic,
     fontSize: 16,
     color: colors.inkMute,
     fontStyle: 'italic',

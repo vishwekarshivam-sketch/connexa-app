@@ -84,20 +84,29 @@ export function DateQuestionnaireScreen({ navigation, route }: Props) {
     const { error } = await saveQuestionnaireAnswers(user.id, formatted);
     
     if (error) {
+      console.error('DateQuestionnaire: Error saving answers:', error);
       alert(error);
       setSaving(false);
       return;
     }
 
     // Initialize/Update profile row so we know they finished questionnaire
-    await updateDateProfile(user.id, {
+    // Normalize enums to lowercase for DB
+    const { error: profileError } = await updateDateProfile(user.id, {
       display_name: user.display_name || 'Anonymous',
-      iit: user.iit || 'iitb',
+      iit: (user.iit || 'iitb').toLowerCase() as any,
       branch: user.branch || 'unknown',
-      year: Number(user.year ?? 2026),
-      gender: user.gender || 'other',
+      year: user.year || '2026',
+      gender: (user.gender || 'other').toLowerCase() as any,
       status: 'draft' // Keep as draft until photos/prompts are added in next screen
     });
+
+    if (profileError) {
+      console.error('DateQuestionnaire: Error initializing profile:', profileError);
+      alert('Failed to initialize profile: ' + profileError);
+      setSaving(false);
+      return;
+    }
 
     setSaving(false);
     navigation.replace('DateProfileSetup', { step: 1 });
@@ -160,6 +169,20 @@ export function DateQuestionnaireScreen({ navigation, route }: Props) {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.khadi, paddingTop: insets.top }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'flex-end', paddingHorizontal: 32, paddingTop: 16 }}>
+        <TouchableOpacity onPress={finish}>
+          <Text style={{ 
+            fontFamily: fonts.label, 
+            fontSize: 10, 
+            textTransform: 'uppercase', 
+            letterSpacing: 1.4,
+            color: colors.inkWhisper
+          }}>
+            Skip Quiz
+          </Text>
+        </TouchableOpacity>
+      </View>
+
       <View style={{ paddingHorizontal: 32, paddingTop: 24, flex: 1 }}>
         <Text style={{ 
           fontFamily: fonts.label, 

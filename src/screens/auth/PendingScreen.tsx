@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, Linking } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '@/types';
@@ -7,18 +7,33 @@ import { Screen } from '@/components/Screen';
 import { Eyebrow } from '@/components/Eyebrow';
 import { Icon } from '@/components/Icon';
 import { useAuth } from '@/context/AuthContext';
+import { getMyVerificationSubmission, VerificationSubmission } from '@/lib/supabase';
+import { IITS } from '@/fixtures/constants';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Pending'>;
 
 export function PendingScreen({ navigation, route }: Props) {
-  const { displayName, iitLabel, roll, email } = route.params;
+  const { displayName: pName, iitLabel: pIit, roll: pRoll, email: pEmail } = route.params;
   const { user } = useAuth();
+  const [submission, setSubmission] = useState<VerificationSubmission | null>(null);
 
   useEffect(() => {
     if (user?.status === 'onboarding' || user?.status === 'active') {
       navigation.replace('ProfileName');
     }
   }, [navigation, user?.status]);
+
+  useEffect(() => {
+    // Only fetch if we have placeholders (coming from Splash)
+    if (pRoll === '...') {
+      getMyVerificationSubmission().then(setSubmission);
+    }
+  }, [pRoll]);
+
+  const displayName = submission?.user?.display_name || pName;
+  const iitLabel = submission ? (IITS.find(i => i.value === submission.iit)?.label || submission.iit) : pIit;
+  const roll = submission?.roll_number || pRoll;
+  const email = pEmail || user?.email || '';
 
   return (
     <Screen>

@@ -94,11 +94,27 @@ export function DateLockedScreen({ navigation, route }: Props) {
       </Text>
 
       <Button 
-        onPress={() => navigation.navigate('DateQuestionnaire', { step: 1 })}
+        onPress={() => navigation.navigate('DateProfileSetup', { step: 1 })}
         style={{ width: '100%', backgroundColor: colors.ember, marginBottom: 16 }}
       >
         Set up my profile
       </Button>
+
+      <TouchableOpacity 
+        onPress={() => navigation.navigate('DateQuestionnaire', { step: 1 })}
+        style={{ marginBottom: 32 }}
+      >
+        <Text style={{ 
+          fontFamily: fonts.label, 
+          fontSize: 11, 
+          textTransform: 'uppercase', 
+          letterSpacing: 1.2,
+          color: colors.inkWhisper,
+          textAlign: 'center'
+        }}>
+          Answer 13 questions for better matches
+        </Text>
+      </TouchableOpacity>
 
       <TouchableOpacity onPress={() => navigation.goBack()}>
         <Text style={{ 

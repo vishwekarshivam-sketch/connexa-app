@@ -23,7 +23,7 @@ export function BranchStep({ navigation }: Props) {
     setSaving(true);
     const { error } = await updateUser({ branch: b });
     setSaving(false);
-    if (!error) navigation.navigate('ProfileDone');
+    if (!error) navigation.navigate('ProfileYear');
   };
 
   return (
@@ -32,11 +32,11 @@ export function BranchStep({ navigation }: Props) {
         onPress={submit} 
         disabled={!b || saving}
       >
-        {saving ? 'Saving...' : 'Finish'}
+        {saving ? 'Saving...' : 'Continue'}
       </Button>
     }>
       <TopBar onBack={navigation.goBack}>
-        <StepProgress step={4} total={4} />
+        <StepProgress step={4} total={5} />
       </TopBar>
       <View style={{ paddingTop: 30, flex: 1 }}>
         <Title size={34} style={{ marginBottom: 14 }}>Your branch.</Title>

@@ -19,7 +19,7 @@ module.exports = {
         'gambetta-semibold': ['Gambetta-Semibold', 'serif'],
         'gambetta-light': ['Gambetta-Light', 'serif'],
         lore: ['Newsreader_400Regular', 'serif'],
-        'lore-italic': ['Newsreader_400Regular_Italic', 'serif'],
+        'lore-italic': ['Gambetta-LightItalic', 'serif'],
       },
       fontSize: {
         hero: ['2.5rem', { lineHeight: '2.75rem', letterSpacing: '-0.02em' }], // 40px/44px

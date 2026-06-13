@@ -53,13 +53,13 @@ export interface Profile {
 // React Navigation param lists
 export type AuthStackParamList = {
   Splash: undefined;
-  Landing: undefined;
+  Landing: { code?: string };
   LoginEmail: undefined;
   UserType: undefined;
   FresherPath: undefined;
   FresherEmail: undefined;
   IitbEmail: undefined;
-  Otp: { email: string; next: 'ProfileName'; userType: 'fresher' | 'non_fresher'; iit: string };
+  Otp: { email: string; userType: 'fresher' | 'non_fresher'; iit: string };
   DocForm: undefined;
   Pending: { displayName: string; iitLabel: string; roll: string; email?: string };
   ProfileName: undefined;
@@ -153,7 +153,7 @@ export interface DateProfile {
   display_name: string;
   iit: string;
   branch: string;
-  year: number;
+  year: string;
   gender: string;
   gender_visible: boolean;
   bio: string | null;
@@ -234,12 +234,47 @@ export interface DMThread {
   updated_at: string;
 }
 
+export interface Invite {
+  id: string;
+  inviter_id: string;
+  invite_code: string;
+  used_by: string | null;
+  used_at: string | null;
+  bonus_earned: boolean;
+  bonus_earned_at: string | null;
+  created_at: string;
+  invitee_name?: string | null;
+}
+
 export interface Message {
   id: string;
   thread_id: string;
   sender: string;
   body: string;
+  reactions?: any[];
   created_at: string;
+}
+
+export interface PublicIntroduction {
+  id: string;
+  user_id: string;
+  display_name: string;
+  photo_url: string;
+  iit: string;
+  branch: string;
+  hometown?: string;
+  one_liner: string;
+  reaction_count: number;
+  comment_count: number;
+  user_has_reacted?: boolean;
+}
+
+export interface Introduction extends PublicIntroduction {
+  body: string;
+  prompts: PromptAnswer[];
+  interests?: string[];
+  question?: string | null;
+  status?: 'draft' | 'posted';
 }
 
 export type NotificationCategory = 

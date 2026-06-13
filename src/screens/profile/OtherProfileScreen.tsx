@@ -61,7 +61,7 @@ export function OtherProfileScreen({ navigation, route }: Props) {
           </TouchableOpacity>
         </View>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <Text style={{ fontFamily: fonts.body, fontStyle: 'italic', color: colors.inkWhisper }}>Profile not found.</Text>
+          <Text style={{ fontFamily: fonts.bodyItalic, fontStyle: 'italic', color: colors.inkWhisper }}>Profile not found.</Text>
         </View>
       </View>
     );
@@ -168,7 +168,7 @@ export function OtherProfileScreen({ navigation, route }: Props) {
           Responses
         </Text>
         <Text style={{
-          fontFamily: fonts.body,
+          fontFamily: fonts.bodyItalic,
           fontStyle: 'italic',
           fontSize: 14,
           color: colors.inkWhisper,

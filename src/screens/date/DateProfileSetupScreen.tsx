@@ -7,7 +7,7 @@ import { DateStackParamList, ProfilePhoto } from '@/types';
 import { colors, fonts } from '@/tokens';
 import { Button } from '@/components/Button';
 import { useAuth } from '@/context/AuthContext';
-import { uploadDatePhoto, updateDateProfile, savePromptAnswers, getDateProfile } from '@/lib/supabase';
+import { uploadDatePhoto, updateDateProfile, savePromptAnswers, getDateProfile, getQuestionnaireAnswers } from '@/lib/supabase';
 import { Icon } from '@/components/Icon';
 
 type Props = NativeStackScreenProps<DateStackParamList, 'DateProfileSetup'>;
@@ -23,29 +23,45 @@ const PROMPT_OPTIONS = [
   "What a good day with someone looks like—"
 ];
 
-export function DateProfileSetupScreen({ navigation }: Props) {
+export function DateProfileSetupScreen({ navigation, route }: Props) {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   
-  const [step, setStep] = useState(1);
+  const initialStep = Number(route.params?.step ?? 1);
+  const [step, setStep] = useState(initialStep);
   const [photos, setPhotos] = useState<ProfilePhoto[]>([]);
   const [bio, setBio] = useState('');
   const [selectedPrompts, setSelectedPrompts] = useState<{ prompt_id: string, text: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [hasQuestionnaire, setHasQuestionnaire] = useState(true);
 
   useEffect(() => {
     if (!user) return;
+    console.log('DateProfileSetup: Loading profile for', user.id);
     getDateProfile(user.id).then(profile => {
+      console.log('DateProfileSetup: Loaded profile', profile);
       if (profile) {
+        // If profile is already active, don't show setup unless explicitly editing
+        if (profile.status === 'active' || profile.status === 'paused') {
+          console.log('DateProfileSetup: Profile is already active, redirecting to feed');
+          navigation.replace('DateFeed');
+          return;
+        }
+
         setPhotos(profile.photos || []);
         setBio(profile.bio || '');
         setSelectedPrompts(profile.prompts?.map(p => ({ prompt_id: p.prompt_id, text: p.text })) || []);
       }
-    });
+    }).catch(err => console.error('DateProfileSetup: Load profile error', err));
+
+    getQuestionnaireAnswers(user.id).then(answers => {
+      setHasQuestionnaire(answers.length > 0);
+    }).catch(err => console.error('DateProfileSetup: Load quiz error', err));
   }, [user]);
 
   const handleNext = () => {
+    console.log('DateProfileSetup: handleNext', { step });
     if (step < 3) {
       setStep(step + 1);
     } else {
@@ -81,34 +97,71 @@ export function DateProfileSetupScreen({ navigation }: Props) {
   };
 
   const finalize = async () => {
-    if (!user) return;
-    setLoading(true);
-
-    const { error: promptError } = await savePromptAnswers(user.id, selectedPrompts.map((p, i) => ({ ...p, position: i })));
-    if (promptError) {
-      Alert.alert('Error', promptError);
-      setLoading(false);
-      return;
-    }
-
-    const { error: profileError } = await updateDateProfile(user.id, {
-      display_name: user.display_name || 'Anonymous',
-      iit: user.iit || 'iitb',
-      branch: user.branch || 'unknown',
-      year: Number(user.year ?? 2026),
-      gender: user.gender || 'other',
-      bio,
-      status: 'active'
+    console.log('DateProfileSetup: Starting finalize...', { 
+      userId: user?.id, 
+      bio, 
+      promptCount: selectedPrompts.length,
+      userObject: {
+        display_name: user?.display_name,
+        iit: user?.iit,
+        gender: user?.gender,
+        year: user?.year
+      }
     });
 
-    setLoading(false);
-
-    if (profileError) {
-      Alert.alert('Error', profileError);
+    if (!user) {
+      alert('You must be logged in to complete your profile.');
       return;
     }
 
-    navigation.replace('DateFeed');
+    setLoading(true);
+
+    try {
+      // 1. Save Prompts
+      console.log('DateProfileSetup: Saving prompts...');
+      const { error: promptError } = await savePromptAnswers(user.id, selectedPrompts.map((p, i) => ({ ...p, position: i })));
+      if (promptError) {
+        console.error('DateProfileSetup: Error saving prompts:', promptError);
+        alert('Failed to save prompts: ' + promptError);
+        setLoading(false);
+        return;
+      }
+
+      // 2. Update Profile
+      // Normalize enums to lowercase as required by DB
+      const profilePatch = {
+        display_name: user.display_name || 'Anonymous',
+        iit: (user.iit || 'iitb').toLowerCase() as any,
+        branch: user.branch || 'unknown',
+        year: user.year || '2026',
+        gender: (user.gender || 'other').toLowerCase() as any,
+        bio,
+        status: 'active' as const
+      };
+      
+      console.log('DateProfileSetup: Updating profile with patch:', profilePatch);
+      const { error: profileError } = await updateDateProfile(user.id, profilePatch);
+
+      if (profileError) {
+        console.error('DateProfileSetup: Error updating profile:', profileError);
+        alert('Failed to update profile: ' + profileError);
+        setLoading(false);
+        return;
+      }
+
+      console.log('DateProfileSetup: Profile finalized successfully');
+      setLoading(false);
+      
+      // Navigate to feed
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'DateFeed' }],
+      });
+    } catch (err) {
+      console.error('DateProfileSetup: Unexpected error in finalize:', err);
+      alert('An unexpected error occurred: ' + (err instanceof Error ? err.message : String(err)));
+      setLoading(false);
+    }
   };
 
   const addPrompt = (p: string) => {
@@ -219,6 +272,19 @@ export function DateProfileSetupScreen({ navigation }: Props) {
             )}
           </View>
         )}
+
+        {!hasQuestionnaire && (
+          <TouchableOpacity 
+            style={styles.quizNudge}
+            onPress={() => navigation.navigate('DateQuestionnaire', { step: 1 })}
+          >
+            <View style={{ flex: 1 }}>
+              <Text style={styles.quizNudgeTitle}>Improve your matches</Text>
+              <Text style={styles.quizNudgeBody}>Answer 13 quick questions about how you think and live.</Text>
+            </View>
+            <Icon name="chevronRight" size={20} color={colors.inkWhisper} />
+          </TouchableOpacity>
+        )}
       </ScrollView>
 
       <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 24) }]}>
@@ -255,5 +321,17 @@ const styles = StyleSheet.create({
   optionGrid: { gap: 8 },
   option: { padding: 12, borderWidth: 1, borderColor: colors.hairlineSoft },
   optionText: { fontFamily: fonts.body, fontSize: 15, color: colors.inkMute },
+  quizNudge: { 
+    marginTop: 48, 
+    padding: 20, 
+    backgroundColor: colors.khadiLight, 
+    borderWidth: 1, 
+    borderColor: colors.hairlineSoft,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16
+  },
+  quizNudgeTitle: { fontFamily: fonts.serif, fontSize: 18, color: colors.ink, marginBottom: 4 },
+  quizNudgeBody: { fontFamily: fonts.body, fontSize: 14, color: colors.inkMute, lineHeight: 20 },
   footer: { padding: 24, borderTopWidth: 1, borderTopColor: colors.hairlineSoft }
 });

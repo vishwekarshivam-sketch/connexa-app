@@ -9,6 +9,7 @@ import { Eyebrow } from '@/components/Eyebrow';
 import { useAuth } from '@/context/AuthContext';
 import { useHouseMembers } from '@/hooks/useHouseMembers';
 import { Skeleton } from '@/components/Skeleton';
+import { HOUSES } from '@/fixtures/houseData';
 
 type Filter = 'All' | 'Your IIT' | 'Cross-IIT' | 'By Branch';
 const FILTERS: Filter[] = ['All', 'Your IIT', 'Cross-IIT', 'By Branch'];
@@ -16,6 +17,7 @@ const FILTERS: Filter[] = ['All', 'Your IIT', 'Cross-IIT', 'By Branch'];
 export function DiscoverScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
+  const house = HOUSES[user?.house || 'tinkerers'];
   const navigation = useNavigation<NativeStackNavigationProp<ProfileStackParamList>>();
   const { data: members = [], isLoading } = useHouseMembers(user?.house || 'tinkerers');
   const [filter, setFilter] = useState<Filter>('All');
@@ -118,7 +120,7 @@ export function DiscoverScreen() {
             <View style={{
               width: 48,
               height: 48,
-              backgroundColor: colors.lake,
+              backgroundColor: house.primary,
               alignItems: 'center',
               justifyContent: 'center',
               overflow: 'hidden',
@@ -160,7 +162,7 @@ export function DiscoverScreen() {
         ))}
         {sorted.length === 0 && (
           <Text style={{
-            fontFamily: fonts.body,
+            fontFamily: fonts.bodyItalic,
             fontStyle: 'italic',
             fontSize: 15,
             color: colors.inkWhisper,

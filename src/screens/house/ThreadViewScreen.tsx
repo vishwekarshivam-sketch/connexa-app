@@ -25,12 +25,15 @@ import { useChatRealtime } from '@/hooks/useChatRealtime';
 import { useSettleAnimation } from '@/hooks/useSettleAnimation';
 import Animated from 'react-native-reanimated';
 import { Skeleton } from '@/components/Skeleton';
+import { HOUSES } from '@/fixtures/houseData';
+import { haptics } from '@/lib/haptics';
 
 type Props = NativeStackScreenProps<ProfileStackParamList, 'ThreadView'>;
 
 export function ThreadViewScreen({ navigation, route }: Props) {
   const { threadId: initialThreadId, title: initialTitle, threadType } = route.params;
   const { user } = useAuth();
+  const house = HOUSES[user?.house || 'tinkerers'];
   const [threadId, setThreadId] = useState(initialThreadId);
   const [title, setTitle] = useState(initialTitle);
   const [inputText, setInputText] = useState('');
@@ -61,6 +64,7 @@ export function ThreadViewScreen({ navigation, route }: Props) {
   const sendMessage = useMutation({
     mutationFn: async (text: string) => {
       if (!user) throw new Error('Not authenticated');
+      haptics.impactLight();
       
       let targetThreadId = threadId;
       
@@ -89,12 +93,17 @@ export function ThreadViewScreen({ navigation, route }: Props) {
           body: text.trim(),
         });
       if (error) throw error;
+      
+      return { targetThreadId };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       setInputText('');
       settle();
       if (initialThreadId === 'new') {
         queryClient.invalidateQueries({ queryKey: keys.chatThreads(user?.house || '') });
+      }
+      if (data?.targetThreadId) {
+        queryClient.invalidateQueries({ queryKey: keys.chatMessages(data.targetThreadId) });
       }
     },
     onError: (error: any) => {
@@ -120,8 +129,8 @@ export function ThreadViewScreen({ navigation, route }: Props) {
     }
   });
 
-  const renderMessage = ({ item }: { item: Message }) => {
-    const isMine = item.sender === user?.id;
+  const renderMessage = ({ item }: { item: Message & { user_id?: string } }) => {
+    const isMine = item.sender === user?.id || item.user_id === user?.id;
     const reactions = item.reactions || [];
 
     return (
@@ -228,7 +237,7 @@ export function ThreadViewScreen({ navigation, route }: Props) {
             maxLength={500}
           />
           <TouchableOpacity 
-            style={[styles.sendButton, !inputText.trim() && styles.sendDisabled]}
+            style={[styles.sendButton, { backgroundColor: house.primary }, !inputText.trim() && styles.sendDisabled]}
             disabled={!inputText.trim() || sendMessage.isPending}
             onPress={() => sendMessage.mutate(inputText)}
           >

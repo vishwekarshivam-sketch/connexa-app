@@ -11,6 +11,7 @@ import { OtherProfileScreen } from '@/screens/profile/OtherProfileScreen';
 import { EditProfileScreen } from '@/screens/profile/EditProfileScreen';
 import { SettingsScreen } from '@/screens/settings/SettingsScreen';
 import { AdminPanelScreen } from '@/screens/admin/AdminPanelScreen';
+import { InvitesScreen } from '@/screens/house/InvitesScreen';
 
 const Stack = createNativeStackNavigator<ProfileStackParamList>();
 
@@ -28,6 +29,7 @@ export function ProfileNavigator() {
       <Stack.Screen name="EditProfile" component={EditProfileScreen} />
       <Stack.Screen name="Settings" component={SettingsScreen} />
       <Stack.Screen name="AdminPanel" component={AdminPanelScreen as never} />
+      <Stack.Screen name="Invites" component={InvitesScreen} />
     </Stack.Navigator>
   );
 }

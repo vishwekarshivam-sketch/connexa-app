@@ -6,6 +6,7 @@ import {
   isSupabaseConfigured,
   supabase,
   updateProfile,
+  claimInvite,
 } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
 
@@ -34,6 +35,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const storeSetSession = useAuthStore((s) => s.setSession);
   const storeSetUser = useAuthStore((s) => s.setUser);
   const storeSetLoading = useAuthStore((s) => s.setLoading);
+  const inviteCode = useAuthStore((s) => s.inviteCode);
+  const setInviteCode = useAuthStore((s) => s.setInviteCode);
 
   const applyUser = (next: ConnexaUser | null) => {
     setUser(next);
@@ -62,22 +65,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let mounted = true;
 
     async function bootstrap() {
-      if (!supabase) {
+      if (!isSupabaseConfigured || !supabase) {
         if (mounted) {
           setBootstrapping(false);
           storeSetLoading(false);
         }
         return;
       }
-      const { data } = await supabase.auth.getSession();
-      if (!mounted) return;
-      applySession(data.session);
-      if (data.session?.user?.id) {
-        applyUser(await getUserProfileById(data.session.user.id));
-      }
-      if (mounted) {
-        setBootstrapping(false);
-        storeSetLoading(false);
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (!mounted) return;
+        applySession(data.session);
+        if (data.session?.user?.id) {
+          applyUser(await getUserProfileById(data.session.user.id));
+        }
+      } catch (err) {
+        console.warn('Auth bootstrap error:', err);
+      } finally {
+        if (mounted) {
+          setBootstrapping(false);
+          storeSetLoading(false);
+        }
       }
     }
 
@@ -100,6 +108,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    if (session && inviteCode) {
+      claimInvite(inviteCode).then(({ success }) => {
+        if (success) {
+          setInviteCode(null);
+        }
+      });
+    }
+  }, [session, inviteCode]);
+
+  useEffect(() => {
     if (!supabase || !user?.id) return;
 
     const channel = supabase
@@ -120,7 +138,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     bootstrapping,
     session,
     user,
-    isAuthenticated: !!session && user?.status === 'active' && !!user.house,
+    isAuthenticated: !!session && user?.status === 'active' && (!!user.house || user.is_admin),
     isVerified: !!user && ['onboarding', 'active'].includes(user.status),
     refreshUser,
     setUser: applyUser,

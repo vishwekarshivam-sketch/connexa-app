@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
     color: colors.ink,
   },
   subtitle: {
-    fontFamily: fonts.body,
+    fontFamily: fonts.bodyItalic,
     fontStyle: 'italic',
     fontSize: 14,
     color: colors.inkMute,
@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
     color: colors.ink,
   },
   loadingText: {
-    fontFamily: fonts.body,
+    fontFamily: fonts.bodyItalic,
     fontStyle: 'italic',
     fontSize: 15,
     color: colors.inkWhisper,

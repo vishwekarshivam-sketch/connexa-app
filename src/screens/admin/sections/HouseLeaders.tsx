@@ -129,7 +129,7 @@ export function HouseLeaders() {
                       </Text>
                     </View>
                   ) : (
-                    <Text style={{ fontFamily: fonts.body, fontStyle: 'italic', color: colors.inkWhisper, marginTop: 12 }}>
+                    <Text style={{ fontFamily: fonts.bodyItalic, fontStyle: 'italic', color: colors.inkWhisper, marginTop: 12 }}>
                       No leader assigned
                     </Text>
                   )}

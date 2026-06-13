@@ -99,7 +99,7 @@ export function EditProfileScreen({ navigation }: Props) {
             {photoUri ? (
               <Image source={{ uri: photoUri }} style={{ width: 104, height: 104 }} />
             ) : (
-              <Text style={{ fontFamily: fonts.body, fontStyle: 'italic', fontSize: 13, color: colors.inkWhisper }}>
+              <Text style={{ fontFamily: fonts.bodyItalic, fontStyle: 'italic', fontSize: 13, color: colors.inkWhisper }}>
                 Tap to add
               </Text>
             )}
@@ -201,7 +201,7 @@ export function EditProfileScreen({ navigation }: Props) {
       </View>
 
       {!!err && (
-        <Text style={{ fontFamily: fonts.body, fontStyle: 'italic', fontSize: 13.5, color: colors.ember, marginBottom: 16 }}>
+        <Text style={{ fontFamily: fonts.bodyItalic, fontStyle: 'italic', fontSize: 13.5, color: colors.ember, marginBottom: 16 }}>
           {err}
         </Text>
       )}

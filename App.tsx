@@ -39,7 +39,7 @@ function AppContent({ onLayout }: { onLayout: () => void }) {
   }, []);
 
   return (
-    <SafeAreaProvider>
+    <SafeAreaProvider style={{ flex: 1 }}>
       <View style={styles.container} onLayout={onLayout}>
         <RootNavigator />
       </View>
@@ -55,6 +55,7 @@ SplashScreen.preventAutoHideAsync();
 export default function App() {
   const [fontsLoaded, fontError] = useFonts({
     'Gambetta-Light': require('./assets/fonts/Gambetta-Light.ttf'),
+    'Gambetta-LightItalic': require('./assets/fonts/Gambetta-LightItalic.ttf'),
     'Gambetta-Regular': require('./assets/fonts/Gambetta-Regular.ttf'),
     'Gambetta-Medium': require('./assets/fonts/Gambetta-Medium.ttf'),
     'Gambetta-Semibold': require('./assets/fonts/Gambetta-Semibold.ttf'),

@@ -3,6 +3,18 @@ import { Platform } from 'react-native';
 export function registerServiceWorker() {
   if (Platform.OS !== 'web') return;
 
+  // ONLY register in production to avoid aggressive dev caching
+  if (process.env.NODE_ENV !== 'production') {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(registrations => {
+        for (let registration of registrations) {
+          registration.unregister();
+        }
+      });
+    }
+    return;
+  }
+
   if (!document.querySelector('link[rel="manifest"]')) {
     const manifest = document.createElement('link');
     manifest.rel = 'manifest';

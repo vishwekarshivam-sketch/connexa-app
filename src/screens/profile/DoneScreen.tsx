@@ -9,9 +9,25 @@ import { Eyebrow } from '@/components/Eyebrow';
 import { Button } from '@/components/Button';
 import { Icon } from '@/components/Icon';
 
+import { useAuth } from '@/context/AuthContext';
+import { useState } from 'react';
+
 type Props = NativeStackScreenProps<AuthStackParamList, 'ProfileDone'>;
 
 export function DoneScreen({ navigation }: Props) {
+  const { user, updateUser } = useAuth();
+  const [loading, setLoading] = useState(false);
+
+  const handleBegin = async () => {
+    if (user?.status === 'onboarding') {
+      setLoading(true);
+      const { error } = await updateUser({ status: 'active' });
+      setLoading(false);
+      if (error) return;
+    }
+    navigation.navigate('SortingInvitation');
+  };
+
   return (
     <Screen>
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'flex-start', gap: 28 }}>
@@ -32,7 +48,7 @@ export function DoneScreen({ navigation }: Props) {
         }}>
           <Icon name="door" size={22} color={colors.inkMute} />
           <Text style={{ 
-            fontFamily: fonts.body, 
+            fontFamily: fonts.bodyItalic, 
             fontStyle: 'italic', 
             fontSize: 14.5, 
             color: colors.inkMute 
@@ -42,8 +58,8 @@ export function DoneScreen({ navigation }: Props) {
         </View>
       </View>
       <View style={{ paddingBottom: 16 }}>
-        <Button onPress={() => navigation.navigate('SortingInvitation')}>
-          Begin the Sorting
+        <Button onPress={handleBegin} disabled={loading}>
+          {loading ? 'Finalizing...' : 'Begin the Sorting'}
         </Button>
       </View>
     </Screen>

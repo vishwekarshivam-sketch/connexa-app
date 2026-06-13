@@ -70,8 +70,8 @@ export function RootNavigator() {
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.khadi }}>
-        <ActivityIndicator size="large" color={colors.ink} />
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.ink }}>
+        <ActivityIndicator size="large" color={colors.khadi} />
       </View>
     );
   }

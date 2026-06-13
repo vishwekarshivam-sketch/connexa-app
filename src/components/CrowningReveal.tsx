@@ -65,7 +65,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   lightText: {
-    fontFamily: fonts.serif,
+    fontFamily: fonts.bodyItalic,
     fontSize: 24,
     color: colors.khadi,
     fontWeight: '300',
@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   winnerEthos: {
-    fontFamily: fonts.body,
+    fontFamily: fonts.bodyItalic,
     fontSize: 18,
     color: colors.khadi,
     fontStyle: 'italic',

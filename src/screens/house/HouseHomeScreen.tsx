@@ -149,6 +149,20 @@ export function HouseHomeScreen({ navigation }: Props) {
           <Text style={styles.tileLabel}>FROM THE ARCHIVES</Text>
           <Text style={styles.lorePreview} numberOfLines={2}>"{house.ethos}"</Text>
         </TouchableOpacity>
+
+        {/* Tile 9: Invites */}
+        <TouchableOpacity 
+          style={styles.tileWide} 
+          activeOpacity={0.85}
+          onPress={() => navigation.navigate('Invites')}
+        >
+          <Text style={styles.tileLabel}>GROW YOUR HOUSE</Text>
+          <Text style={styles.chatPreview}>
+            {homeData?.invite_count > 0 
+              ? `${homeData.invite_count} invited so far →` 
+              : 'Invite your friends →'}
+          </Text>
+        </TouchableOpacity>
       </ScrollView>
     </View>
   );
@@ -289,7 +303,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   attribution: {
-    fontFamily: fonts.body,
+    fontFamily: fonts.bodyItalic,
     fontSize: 12,
     color: 'rgba(239,231,214,0.5)',
     fontStyle: 'italic',
@@ -314,7 +328,7 @@ const styles = StyleSheet.create({
     color: colors.khadi,
   },
   lorePreview: {
-    fontFamily: fonts.body,
+    fontFamily: fonts.bodyItalic,
     fontSize: 15,
     fontStyle: 'italic',
     color: 'rgba(239,231,214,0.75)',

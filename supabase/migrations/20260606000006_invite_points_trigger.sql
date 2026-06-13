@@ -16,6 +16,15 @@ BEGIN
         'invite_conversion',
         'invite_conv:' || NEW.used_by
       );
+
+      -- Notify inviter
+      PERFORM create_notification(
+        NEW.inviter_id,
+        'invite_converted',
+        'Invite Used',
+        'Someone used your invite link to join! You earned 20 points.',
+        '/house/invites'
+      );
     END IF;
   END IF;
   RETURN NEW;

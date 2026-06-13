@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '@/types';
@@ -5,10 +6,19 @@ import { Screen } from '@/components/Screen';
 import { Button } from '@/components/Button';
 import { colors, fonts } from '@/tokens';
 import { Mark } from '@/components/Mark';
+import { useAuthStore } from '@/stores/authStore';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Landing'>;
 
-export function LandingScreen({ navigation }: Props) {
+export function LandingScreen({ navigation, route }: Props) {
+  const setInviteCode = useAuthStore(state => state.setInviteCode);
+
+  useEffect(() => {
+    if (route.params?.code) {
+      setInviteCode(route.params.code);
+    }
+  }, [route.params?.code, setInviteCode]);
+
   return (
     <Screen bg={colors.ink}>
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>

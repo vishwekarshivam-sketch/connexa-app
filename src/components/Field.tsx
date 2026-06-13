@@ -52,7 +52,7 @@ export function Field({ label, value, onChange, placeholder, type = 'default', e
       {!!error && (
         <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 7, marginTop: 10 }}>
           <Icon name="lamp" size={15} color={colors.ember} />
-          <Text style={{ fontFamily: fonts.body, fontStyle: 'italic', fontSize: 13.5, color: colors.ember, lineHeight: 20, flex: 1 }}>
+          <Text style={{ fontFamily: fonts.bodyItalic, fontStyle: 'italic', fontSize: 13.5, color: colors.ember, lineHeight: 20, flex: 1 }}>
             {error}
           </Text>
         </View>

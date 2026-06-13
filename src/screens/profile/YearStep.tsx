@@ -11,6 +11,8 @@ import { Body } from '@/components/Body';
 import { Button } from '@/components/Button';
 import { Icon } from '@/components/Icon';
 
+import { useAuth } from '@/context/AuthContext';
+
 type Props = NativeStackScreenProps<AuthStackParamList, 'ProfileYear'>;
 
 const OPTS: [string, string][] = [
@@ -21,15 +23,25 @@ const OPTS: [string, string][] = [
 ];
 
 export function YearStep({ navigation }: Props) {
-  const [y, setY] = useState('');
+  const { user, updateUser } = useAuth();
+  const [y, setY] = useState(user?.year ?? '');
+  const [saving, setSaving] = useState(false);
+
+  const submit = async () => {
+    if (!y) return;
+    setSaving(true);
+    const { error } = await updateUser({ year: y });
+    setSaving(false);
+    if (!error) navigation.navigate('ProfileDone');
+  };
 
   return (
     <Screen footer={
       <Button 
-        onPress={() => navigation.navigate('ProfileDone')} 
-        disabled={!y}
+        onPress={submit} 
+        disabled={!y || saving}
       >
-        Finish
+        {saving ? 'Saving...' : 'Finish'}
       </Button>
     }>
       <TopBar onBack={navigation.goBack}>

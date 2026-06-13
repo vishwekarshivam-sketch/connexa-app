@@ -46,6 +46,15 @@ BEGIN
         'invite_converted',
         'invite:' || v_invite.id
       );
+
+      -- Notify inviter
+      PERFORM create_notification(
+        v_invite.inviter_id,
+        'invite_converted',
+        'Invite Converted',
+        COALESCE(v_sub.full_name, 'Someone') || ' joined Connexa. Your invite came through.',
+        '/house/invites'
+      );
       
       -- Mark invite bonus as earned
       UPDATE invites SET bonus_earned = true, bonus_earned_at = NOW() WHERE id = v_invite.id;

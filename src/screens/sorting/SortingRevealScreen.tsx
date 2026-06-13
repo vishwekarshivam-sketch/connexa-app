@@ -8,6 +8,7 @@ import { CeremonialReveal, CeremonyStage } from '@/components/CeremonialReveal';
 import { Mark } from '@/components/Mark';
 import { useAuth } from '@/context/AuthContext';
 import { HouseSigil } from '@/components/HouseSigil';
+import { getHouseMemberCount } from '@/lib/supabase';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'SortingReveal'>;
 
@@ -15,6 +16,11 @@ export function SortingRevealScreen({ navigation, route }: Props) {
   const { house: houseId } = route.params;
   const house = HOUSES[houseId];
   const { user } = useAuth();
+  const [memberCount, setMemberCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    getHouseMemberCount(houseId).then(setMemberCount);
+  }, [houseId]);
 
   const stages: CeremonyStage[] = [
     {
@@ -71,7 +77,9 @@ export function SortingRevealScreen({ navigation, route }: Props) {
       backgroundColor: house.primary,
       content: (
         <View style={styles.centered}>
-          <Text style={styles.memberNumber}>MEMBER #42</Text>
+          <Text style={styles.memberNumber}>
+            {memberCount !== null ? `MEMBER #${memberCount}` : 'HOUSE MEMBER'}
+          </Text>
           <Text style={styles.ethos}>{house.ethos}</Text>
           <TouchableOpacity
             onPress={() => navigation.navigate('SortingCard', { house: houseId })}
@@ -131,7 +139,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   ethos: {
-    fontFamily: fonts.body,
+    fontFamily: fonts.bodyItalic,
     fontStyle: 'italic',
     fontSize: 18,
     color: colors.khadi,

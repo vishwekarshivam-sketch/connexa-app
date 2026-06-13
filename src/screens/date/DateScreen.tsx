@@ -11,12 +11,26 @@ import { hasAskedForNotifications, setNotificationAsked } from '@/lib/notificati
 type Props = NativeStackScreenProps<DateStackParamList, 'DateHome'>;
 
 export function DateScreen({ navigation }: Props) {
-  const { user } = useAuth();
+  const { user, bootstrapping } = useAuth();
   const [showPrompt, setShowPrompt] = useState(false);
 
   useEffect(() => {
     async function checkState() {
-      if (!user) return;
+      if (bootstrapping) {
+        console.log('[DateScreen] Auth is bootstrapping, waiting...');
+        return;
+      }
+
+      if (!user) {
+        console.log('[DateScreen] No user yet');
+        return;
+      }
+
+      console.log('[DateScreen] Checking state for user:', {
+        id: user.id,
+        user_type: user.user_type,
+        status: user.status
+      });
 
       // Check if we should show notification prompt (non-freshers only here)
       const asked = await hasAskedForNotifications();
@@ -25,12 +39,20 @@ export function DateScreen({ navigation }: Props) {
       }
 
       const profile = await getDateProfile(user.id);
+      console.log('[DateScreen] Fetched profile:', profile);
 
       // Placeholder for unlock date logic
       const globalUnlockDate = '2026-08-20T00:00:00Z'; 
       const isPreUnlock = user.user_type === 'fresher' && new Date() < new Date(globalUnlockDate);
+      
+      console.log('[DateScreen] Status check:', { 
+        isPreUnlock, 
+        profileStatus: profile?.status,
+        profileFound: !!profile 
+      });
 
       if (!profile) {
+        console.log('[DateScreen] Redirecting to DateIntro (no profile found)');
         if (isPreUnlock) {
           navigation.replace('DateLocked', { unlockDate: globalUnlockDate });
         } else {
@@ -40,20 +62,22 @@ export function DateScreen({ navigation }: Props) {
       }
 
       if (profile.status === 'draft') {
+        console.log('[DateScreen] Redirecting to setup/locked (profile in draft)');
         if (isPreUnlock) {
           navigation.replace('DateLocked', { unlockDate: profile.unlock_at || globalUnlockDate });
         } else {
-          // If past unlock or non-fresher, but still draft, send to profile setup
           navigation.replace('DateProfileSetup', { step: 1 });
         }
         return;
       }
 
       if (profile.status === 'active' || profile.status === 'paused') {
+        console.log('[DateScreen] Redirecting to DateFeed (active/paused profile)');
         navigation.replace('DateFeed');
         return;
       }
 
+      console.log('[DateScreen] Fallback to DateIntro');
       navigation.replace('DateIntro');
     }
 

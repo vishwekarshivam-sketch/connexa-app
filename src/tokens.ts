@@ -25,7 +25,7 @@ export const fonts = {
   serif: 'Gambetta-Regular',
   serifLight: 'Gambetta-Light',
   body: 'Gambetta-Regular',
-  bodyItalic: 'Newsreader_400Regular_Italic', // Or keep as Newsreader
+  bodyItalic: 'Gambetta-LightItalic',
   label: 'ClashDisplay-Medium',
   title: 'Gambetta-Regular',
   display: {
@@ -35,7 +35,7 @@ export const fonts = {
   },
   lore: {
     regular: 'Newsreader_400Regular',
-    italic: 'Newsreader_400Regular_Italic',
+    italic: 'Gambetta-LightItalic',
   },
 
   // Named type scale tokens (for new/refactored code)
@@ -100,7 +100,7 @@ export const fonts = {
     letterSpacing: 0,
   },
   scaleLoreItalic: {
-    family: 'Newsreader_400Regular_Italic',
+    family: 'Gambetta-LightItalic',
     size: 16,
     lineHeight: 26,
     letterSpacing: 0,

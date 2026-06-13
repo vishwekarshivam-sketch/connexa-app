@@ -18,6 +18,38 @@ const tabIcons: Record<keyof MainTabParamList, IconName> = {
   Date: 'heart',
 };
 
+function HouseStack() {
+  return (
+    <ErrorBoundary>
+      <ProfileNavigator />
+    </ErrorBoundary>
+  );
+}
+
+function IntroductionsStack() {
+  return (
+    <ErrorBoundary>
+      <IntroNavigator />
+    </ErrorBoundary>
+  );
+}
+
+function DateStack() {
+  return (
+    <ErrorBoundary>
+      <DateNavigator />
+    </ErrorBoundary>
+  );
+}
+
+function LeaderboardStack() {
+  return (
+    <ErrorBoundary>
+      <LeaderboardScreen />
+    </ErrorBoundary>
+  );
+}
+
 export function MainNavigator() {
   const { user } = useAuthStore();
 
@@ -61,40 +93,16 @@ export function MainNavigator() {
       }}
     >
       {isFresherOrLeader && (
-        <Tab.Screen name="House">
-          {() => (
-            <ErrorBoundary>
-              <ProfileNavigator />
-            </ErrorBoundary>
-          )}
-        </Tab.Screen>
+        <Tab.Screen name="House" component={HouseStack} />
       )}
       
-      <Tab.Screen name="Introductions">
-        {() => (
-          <ErrorBoundary>
-            <IntroNavigator />
-          </ErrorBoundary>
-        )}
-      </Tab.Screen>
+      <Tab.Screen name="Introductions" component={IntroductionsStack} />
       
       {isFresherOrLeader && (
-        <Tab.Screen name="Leaderboard">
-          {() => (
-            <ErrorBoundary>
-              <LeaderboardScreen />
-            </ErrorBoundary>
-          )}
-        </Tab.Screen>
+        <Tab.Screen name="Leaderboard" component={LeaderboardStack} />
       )}
       
-      <Tab.Screen name="Date">
-        {() => (
-          <ErrorBoundary>
-            <DateNavigator />
-          </ErrorBoundary>
-        )}
-      </Tab.Screen>
+      <Tab.Screen name="Date" component={DateStack} />
     </Tab.Navigator>
   );
 }

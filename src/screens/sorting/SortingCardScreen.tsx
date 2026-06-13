@@ -13,7 +13,7 @@ type Props = NativeStackScreenProps<AuthStackParamList, 'SortingCard'>;
 
 export function SortingCardScreen({ navigation, route }: Props) {
   const house = HOUSES[route.params.house];
-  const { setUser } = useAuth();
+  const { refreshUser } = useAuth();
   const [err, setErr] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPrompt, setShowPrompt] = useState(false);
@@ -21,17 +21,10 @@ export function SortingCardScreen({ navigation, route }: Props) {
   const handleFinish = async () => {
     setShowPrompt(false);
     setLoading(true);
-    // Note: QuizScreen already calls completeSorting, but we call it here again
-    // to handle the edge case where QuizScreen failed or User re-enters this screen.
-    // The RPC handles the 'already sorted' check.
-    const result = await completeSorting(route.params.house, {}, {});
+    // Note: QuizScreen already calls completeSorting.
+    // We just refresh the user profile to trigger the RootNavigator switch.
+    await refreshUser();
     setLoading(false);
-    if (result.error && result.error !== 'User is already sorted') {
-      setErr(result.error);
-      return;
-    }
-    // We fetch user again from AuthContext or just navigate
-    setUser(null); // Force reload
   };
 
   const enter = () => {
@@ -82,7 +75,7 @@ export function SortingCardScreen({ navigation, route }: Props) {
       <View style={{ gap: 12 }}>
         {!!err && (
           <Text style={{
-            fontFamily: fonts.body,
+            fontFamily: fonts.bodyItalic,
             fontStyle: 'italic',
             fontSize: 13.5,
             color: 'rgba(239,231,214,0.7)',

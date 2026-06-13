@@ -45,7 +45,7 @@ export function SortingInvitationScreen({ navigation }: Props) {
           </Title>
           <View style={{ width: '100%', height: 1, backgroundColor: 'rgba(239,231,214,0.2)' }} />
           <Text style={{ 
-            fontFamily: fonts.body, 
+            fontFamily: fonts.bodyItalic, 
             fontStyle: 'italic', 
             fontSize: 14, 
             color: 'rgba(239,231,214,0.6)' 
@@ -61,7 +61,7 @@ export function SortingInvitationScreen({ navigation }: Props) {
             Begin
           </Button>
           <Text style={{ 
-            fontFamily: fonts.body, 
+            fontFamily: fonts.bodyItalic, 
             fontStyle: 'italic', 
             fontSize: 13, 
             color: 'rgba(239,231,214,0.4)', 

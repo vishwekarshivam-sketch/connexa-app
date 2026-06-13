@@ -116,7 +116,7 @@ export function SeasonControls() {
           padding: 12,
           marginVertical: 16
         }}>
-          <Text style={{ fontFamily: fonts.body, fontSize: 14, color: colors.ember, fontStyle: 'italic' }}>
+          <Text style={{ fontFamily: fonts.bodyItalic, fontSize: 14, color: colors.ember, fontStyle: 'italic' }}>
             This ends Season 1. The leaderboard freezes. The ceremony fires for all users. This cannot be undone.
           </Text>
         </View>

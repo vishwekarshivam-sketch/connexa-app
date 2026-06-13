@@ -16,7 +16,8 @@ import {
   Message,
   ConnexaUser,
   UserType,
-  UserStatus
+  UserStatus,
+  Invite
 } from '@/types';
 
 export type { ConnexaUser } from '@/types';
@@ -317,7 +318,7 @@ export async function submitDocForm(data: {
   }
 }
 
-export async function updateProfile(patch: Partial<Pick<ConnexaUser, 'display_name' | 'photo_url' | 'gender' | 'branch' | 'year' | 'hometown'>>): Promise<AuthResult> {
+export async function updateProfile(patch: Partial<Pick<ConnexaUser, 'display_name' | 'photo_url' | 'gender' | 'branch' | 'year' | 'hometown' | 'status'>>): Promise<AuthResult> {
   try {
     const client = requireSupabase();
     const { data: authData, error: authError } = await client.auth.getUser();
@@ -362,6 +363,20 @@ export async function uploadProfilePhoto(asset: DocumentAsset): Promise<AuthResu
 }
 
 
+export async function getHouseMemberCount(house: House): Promise<number> {
+  try {
+    const client = requireSupabase();
+    const { count, error } = await client
+      .from('users')
+      .select('*', { count: 'exact', head: true })
+      .eq('house', house);
+    if (error) throw error;
+    return count || 0;
+  } catch {
+    return 0;
+  }
+}
+
 export async function getHouseMembers(house: House): Promise<ConnexaUser[]> {
   try {
     const client = requireSupabase();
@@ -405,26 +420,59 @@ export async function getHouseScores(): Promise<HouseScore[]> {
   }
 }
 
-export async function getMyIntroductions(): Promise<IntroductionWithProfile[]> {
+export interface Introduction {
+  id: string;
+  user_id: string;
+  status: 'draft' | 'posted' | 'ig_locked';
+  photo_url: string;
+  display_name: string;
+  iit: string;
+  branch: string;
+  hometown: string;
+  one_liner: string;
+  interests: string[];
+  question: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface IntroductionWithMeta extends Introduction {
+  reaction_count: number;
+  comment_count: number;
+  user_has_reacted: boolean;
+}
+
+export interface InterestWithProfile extends Interest {
+  display_name: string;
+  photo_url: string;
+  iit: string;
+  branch: string;
+}
+
+export interface IntroFilters {
+  iit?: string;
+}
+
+export async function getReceivedInterests(): Promise<InterestWithProfile[]> {
   try {
     const client = requireSupabase();
     const { data, error } = await client.rpc('get_received_interests');
     if (error) throw error;
-    return (data ?? []) as IntroductionWithProfile[];
+    return (data ?? []) as InterestWithProfile[];
   } catch {
     return [];
   }
 }
 
-export async function respondToIntroduction(
+export async function resolveInterest(
   id: string,
-  response: 'accepted' | 'passed',
+  response: 'accept' | 'pass',
 ): Promise<{ error: string | null }> {
   try {
     const client = requireSupabase();
     const { error } = await client.rpc('resolve_received_interest', {
       p_interest_id: id,
-      p_action: response === 'accepted' ? 'accept' : 'pass'
+      p_action: response
     });
     if (error) return { error: error.message };
     return { error: null };
@@ -432,6 +480,170 @@ export async function respondToIntroduction(
     return { error: messageFromError(error) };
   }
 }
+
+// --- Introductions Feed ---
+
+export async function getIntroFeed(filters: IntroFilters = {}): Promise<IntroductionWithMeta[]> {
+  try {
+    const client = requireSupabase();
+    let query = client
+      .from('introductions')
+      .select(`
+        *,
+        reactions:intro_reactions(count),
+        comments:intro_comments(count),
+        my_reaction:intro_reactions(user_id)
+      `)
+      .eq('status', 'posted')
+      .order('created_at', { ascending: false });
+
+    if (filters.iit) {
+      query = query.eq('iit', filters.iit);
+    }
+
+    const { data, error } = await query.limit(50);
+    if (error) throw error;
+
+    const { data: { user } } = await client.auth.getUser();
+
+    return (data ?? []).map((intro: any) => ({
+      ...intro,
+      reaction_count: intro.reactions[0]?.count || 0,
+      comment_count: intro.comments[0]?.count || 0,
+      user_has_reacted: intro.my_reaction?.some((r: any) => r.user_id === user?.id) || false
+    })) as IntroductionWithMeta[];
+  } catch (err) {
+    console.error('supabase: getIntroFeed error', err);
+    return [];
+  }
+}
+
+export async function getMyIntroduction(): Promise<Introduction | null> {
+  try {
+    const client = requireSupabase();
+    const { data: { user } } = await client.auth.getUser();
+    if (!user) return null;
+
+    const { data, error } = await client
+      .from('introductions')
+      .select('*')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    
+    if (error) throw error;
+    return data as Introduction | null;
+  } catch {
+    return null;
+  }
+}
+
+export async function upsertIntroduction(intro: Partial<Introduction>) {
+  try {
+    const client = requireSupabase();
+    const { data: { user } } = await client.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const { data, error } = await client
+      .from('introductions')
+      .upsert({ ...intro, user_id: user.id })
+      .select()
+      .single();
+    
+    if (error) return { error: error.message };
+    return { data: data as Introduction, error: null };
+  } catch (error) {
+    return { error: messageFromError(error) };
+  }
+}
+
+export interface IntroCommentWithProfile {
+  id: string;
+  intro_id: string;
+  user_id: string;
+  body: string;
+  created_at: string;
+  display_name: string;
+  photo_url: string;
+}
+
+export async function getIntroComments(introId: string): Promise<IntroCommentWithProfile[]> {
+  try {
+    const client = requireSupabase();
+    const { data, error } = await client
+      .from('intro_comments')
+      .select(`
+        *,
+        user:users(display_name, photo_url)
+      `)
+      .eq('intro_id', introId)
+      .is('deleted_at', null)
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+
+    return (data ?? []).map((c: any) => ({
+      ...c,
+      display_name: c.user?.display_name || 'Anonymous',
+      photo_url: c.user?.photo_url || ''
+    })) as IntroCommentWithProfile[];
+  } catch (err) {
+    console.error('supabase: getIntroComments error', err);
+    return [];
+  }
+}
+
+export async function addIntroComment(introId: string, body: string) {
+  try {
+    const client = requireSupabase();
+    const { data: { user } } = await client.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    console.log(`[Supabase] Adding comment to intro ${introId} for user ${user.id}`);
+    const { data, error } = await client
+      .from('intro_comments')
+      .insert({ intro_id: introId, user_id: user.id, body: body.trim() })
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('[Supabase] addIntroComment error:', error);
+      return { error: error.message };
+    }
+    return { data, error: null };
+  } catch (error) {
+    console.error('[Supabase] addIntroComment exception:', error);
+    return { error: messageFromError(error) };
+  }
+}
+
+export async function toggleIntroReaction(introId: string) {
+  try {
+    const client = requireSupabase();
+    const { data: { user } } = await client.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    // Check if exists
+    const { data: existing } = await client
+      .from('intro_reactions')
+      .select('id')
+      .eq('intro_id', introId)
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (existing) {
+      await client.from('intro_reactions').delete().eq('id', existing.id);
+    } else {
+      await client.from('intro_reactions').insert({ intro_id: introId, user_id: user.id });
+    }
+    return { error: null };
+  } catch (error) {
+    return { error: messageFromError(error) };
+  }
+}
+
+// Keep old exports for compatibility during transition
+export const getMyIntroductions = getReceivedInterests;
+export const respondToIntroduction = resolveInterest;
 
 export async function completeSorting(house: string, responses: any, breakdown: any) {
   try {
@@ -469,14 +681,33 @@ export async function getPublicProfile(userId: string): Promise<ConnexaUser | nu
 export async function getDateProfile(userId: string): Promise<DateProfile | null> {
   try {
     const client = requireSupabase();
+    console.log(`[Supabase] Fetching date profile for ${userId}`);
     const { data, error } = await client
       .from('date_profiles')
-      .select('*, photos:date_photos(*), prompts:date_prompt_answers(*)')
+      .select('user_id, status')
       .eq('user_id', userId)
       .maybeSingle();
-    if (error) throw error;
-    return data as DateProfile | null;
-  } catch {
+    
+    if (error) {
+      console.error('[Supabase] getDateProfile error:', error);
+      throw error;
+    }
+    
+    console.log(`[Supabase] getDateProfile result for ${userId}:`, data ? 'FOUND' : 'NOT FOUND');
+    if (!data) return null;
+
+    // Map database 'body' to frontend 'text' for prompts
+    const profile = data as any;
+    if (profile.prompts) {
+      profile.prompts = profile.prompts.map((p: any) => ({
+        ...p,
+        text: p.body
+      }));
+    }
+
+    return profile as DateProfile;
+  } catch (err) {
+    console.error('[Supabase] getDateProfile exception:', err);
     return null;
   }
 }
@@ -484,29 +715,39 @@ export async function getDateProfile(userId: string): Promise<DateProfile | null
 export async function createDateProfile(profile: Partial<DateProfile>) {
   try {
     const client = requireSupabase();
+    console.log('[Supabase] Creating date profile:', profile);
     const { data, error } = await client
       .from('date_profiles')
       .insert(profile)
       .select()
       .single();
-    if (error) return { error: error.message };
+    if (error) {
+      console.error('[Supabase] createDateProfile error:', error);
+      return { error: error.message };
+    }
     return { data: data as DateProfile, error: null };
   } catch (error) {
+    console.error('[Supabase] createDateProfile exception:', error);
     return { error: messageFromError(error) };
   }
 }
 
 export async function updateDateProfile(userId: string, patch: Partial<DateProfile>) {
   try {
+    console.log('[Supabase] Updating date profile for', userId, patch);
     const client = requireSupabase();
     const { data, error } = await client
       .from('date_profiles')
       .upsert({ user_id: userId, ...patch })
       .select()
       .single();
-    if (error) return { error: error.message };
+    if (error) {
+      console.error('[Supabase] updateDateProfile error:', error);
+      return { error: error.message };
+    }
     return { data: data as DateProfile, error: null };
   } catch (error) {
+    console.error('[Supabase] updateDateProfile exception:', error);
     return { error: messageFromError(error) };
   }
 }
@@ -554,14 +795,24 @@ export async function saveQuestionnaireAnswers(userId: string, answers: any[]) {
 
 export async function savePromptAnswers(userId: string, answers: any[]) {
   try {
+    console.log('supabase: savePromptAnswers', userId, answers);
     const client = requireSupabase();
     await client.from('date_prompt_answers').delete().eq('user_id', userId);
     const { error } = await client.from('date_prompt_answers').insert(
-      answers.map(a => ({ ...a, user_id: userId }))
+      answers.map(a => ({ 
+        user_id: userId,
+        prompt_id: a.prompt_id,
+        body: a.text, // Database column is 'body'
+        position: a.position
+      }))
     );
-    if (error) return { error: error.message };
+    if (error) {
+      console.error('supabase: savePromptAnswers error', error);
+      return { error: error.message };
+    }
     return { error: null };
   } catch (error) {
+    console.error('supabase: savePromptAnswers exception', error);
     return { error: messageFromError(error) };
   }
 }
@@ -604,12 +855,26 @@ export async function getDateFeed(): Promise<DateProfile[]> {
     const { data, error } = await client.rpc('get_date_browse_feed', {
       p_user_id: authData.user.id,
     });
+
     if (error) throw error;
-    return ((Array.isArray(data) ? data : []) as DateProfile[]);
-  } catch {
+
+    // Map database 'body' to frontend 'text' for all profiles in the feed
+    const profiles = (Array.isArray(data) ? data : []) as any[];
+    return profiles.map(profile => {
+      if (profile.prompts) {
+        profile.prompts = profile.prompts.map((p: any) => ({
+          ...p,
+          text: p.body || p.text // Handle both just in case
+        }));
+      }
+      return profile as DateProfile;
+    });
+  } catch (error) {
+    console.error('supabase: getDateFeed error', error);
     return [];
   }
 }
+
 
 export async function getMyMatches(userId: string): Promise<Match[]> {
   try {
@@ -885,6 +1150,27 @@ export async function getModerationReports(category: 'chat' | 'intro' | 'date'):
   }
 }
 
+export async function getMyVerificationSubmission(): Promise<VerificationSubmission | null> {
+  try {
+    const client = requireSupabase();
+    const { data: authData } = await client.auth.getUser();
+    if (!authData.user) return null;
+
+    const { data, error } = await client
+      .from('verification_submissions')
+      .select('*')
+      .eq('user_id', authData.user.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    
+    if (error) throw error;
+    return data as VerificationSubmission | null;
+  } catch {
+    return null;
+  }
+}
+
 export async function dismissModerationReport(reportId: string) {
   try {
     const client = requireSupabase();
@@ -960,3 +1246,85 @@ export async function updateSeasonConfig(patch: Partial<SeasonConfig>) {
     return { error: messageFromError(error) };
   }
 }
+
+// Invite Functions
+
+export async function getMyInvites(): Promise<Invite[]> {
+  try {
+    const client = requireSupabase();
+    const { data: authData } = await client.auth.getUser();
+    if (!authData.user) return [];
+
+    const { data, error } = await client
+      .from('invites')
+      .select('*, invitee:users!invites_used_by_fkey(display_name)')
+      .eq('inviter_id', authData.user.id)
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+
+    return (data ?? []).map((row: any) => ({
+      ...row,
+      invitee_name: row.invitee?.display_name
+    })) as Invite[];
+  } catch (error) {
+    console.error('supabase: getMyInvites error', error);
+    return [];
+  }
+}
+
+export async function createInvite(): Promise<{ data: Invite | null; error: string | null }> {
+  try {
+    const client = requireSupabase();
+    const { data: authData } = await client.auth.getUser();
+    if (!authData.user) return { data: null, error: 'Not authenticated' };
+
+    const { data, error } = await client
+      .from('invites')
+      .insert({ inviter_id: authData.user.id })
+      .select()
+      .single();
+    
+    if (error) return { data: null, error: error.message };
+    return { data: data as Invite, error: null };
+  } catch (error) {
+    return { data: null, error: messageFromError(error) };
+  }
+}
+
+export async function getInviteStats(): Promise<{ invited: number; bonus_earned: number }> {
+  try {
+    const client = requireSupabase();
+    const { data: authData } = await client.auth.getUser();
+    if (!authData.user) return { invited: 0, bonus_earned: 0 };
+
+    const { data, error } = await client
+      .from('invites')
+      .select('id, bonus_earned, used_by')
+      .eq('inviter_id', authData.user.id);
+    
+    if (error) throw error;
+
+    const invited = (data ?? []).filter(i => i.used_by !== null).length;
+    const bonus_earned = (data ?? []).filter(i => i.bonus_earned).length;
+
+    return { invited, bonus_earned };
+  } catch (error) {
+    console.error('supabase: getInviteStats error', error);
+    return { invited: 0, bonus_earned: 0 };
+  }
+}
+
+export async function claimInvite(code: string): Promise<{ success: boolean; error: string | null }> {
+  try {
+    const client = requireSupabase();
+    const { data, error } = await client.rpc('claim_invite', { p_invite_code: code });
+    if (error) return { success: false, error: error.message };
+    if (!data.success) return { success: false, error: data.error };
+    return { success: true, error: null };
+  } catch (error) {
+    return { success: false, error: messageFromError(error) };
+  }
+}
+
+

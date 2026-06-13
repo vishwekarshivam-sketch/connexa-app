@@ -156,7 +156,7 @@ export function DocFormScreen({ navigation }: Props) {
         {errs.iit && (
           <Text style={{ 
             marginTop: -20, 
-            fontFamily: fonts.body, 
+            fontFamily: fonts.bodyItalic, 
             fontStyle: 'italic', 
             fontSize: 13.5, 
             color: colors.ember 
@@ -194,7 +194,7 @@ export function DocFormScreen({ navigation }: Props) {
             <View style={{ flexDirection: 'row', gap: 7, marginTop: 10 }}>
               <Icon name="lamp" size={15} color={colors.ember} />
               <Text style={{ 
-                fontFamily: fonts.body, 
+                fontFamily: fonts.bodyItalic, 
                 fontStyle: 'italic', 
                 fontSize: 13.5, 
                 color: colors.ember 

@@ -7,6 +7,8 @@ import { scoreHouse } from '@/fixtures/houseData';
 import { colors, fonts } from '@/tokens';
 import { completeSorting } from '@/lib/supabase';
 
+import { haptics } from '@/lib/haptics';
+
 type Props = NativeStackScreenProps<AuthStackParamList, 'SortingQuiz'>;
 
 const ROMAN = ['I','II','III','IV','V','VI','VII','VIII','IX'];
@@ -19,6 +21,11 @@ export function SortingQuizScreen({ navigation }: Props) {
 
   const q = SORTING_QUESTIONS[qIdx];
   const total = SORTING_QUESTIONS.length;
+
+  const handleSelect = (idx: string) => {
+    setSelected(idx);
+    haptics.selection();
+  };
 
   const advance = async () => {
     if (selected === null) return;
@@ -89,7 +96,7 @@ export function SortingQuizScreen({ navigation }: Props) {
             return (
               <TouchableOpacity
                 key={i}
-                onPress={() => setSelected(String(i))}
+                onPress={() => handleSelect(String(i))}
                 activeOpacity={0.85}
                 disabled={saving}
                 style={{

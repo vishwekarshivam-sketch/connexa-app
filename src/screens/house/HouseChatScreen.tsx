@@ -51,7 +51,7 @@ export function HouseChatScreen({ navigation }: Props) {
     <TouchableOpacity 
       style={[
         styles.threadRow, 
-        item.type === 'prompt' && styles.promptThread
+        item.type === 'prompt' && [styles.promptThread, { borderLeftColor: house.primary }]
       ]}
       onPress={() => {
         navigation.navigate('ThreadView', {
@@ -172,7 +172,6 @@ const styles = StyleSheet.create({
   },
   promptThread: {
     borderLeftWidth: 3,
-    borderLeftColor: colors.lake, // Should be house primary
     backgroundColor: 'rgba(0,0,0,0.01)',
   },
   iconContainer: {

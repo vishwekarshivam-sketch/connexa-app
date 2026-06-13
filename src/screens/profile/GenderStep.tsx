@@ -42,7 +42,7 @@ export function GenderStep({ navigation }: Props) {
       </Button>
     }>
       <TopBar onBack={navigation.goBack}>
-        <StepProgress step={3} total={4} />
+        <StepProgress step={3} total={5} />
       </TopBar>
       <View style={{ paddingTop: 30, flex: 1 }}>
         <Title size={34} style={{ marginBottom: 14 }}>

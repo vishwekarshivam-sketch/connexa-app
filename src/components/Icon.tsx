@@ -10,7 +10,7 @@ export type IconName =
   | 'chevronRight' | 'chevronLeft' | 'chevronDown' | 'arrowRight'
   | 'shield' | 'users' | 'messageSquare' | 'bookOpen' | 'flag' | 'shieldOff' | 'settings'
   | 'bell' | 'x' | 'fileText' | 'edit' | 'trash' | 'user' | 'moreVertical' | 'barChart2' | 'heart' | 'plus'
-  | 'wifiOff' | 'alertTriangle';
+  | 'wifiOff' | 'alertTriangle' | 'share' | 'copy';
 
 export type IconSizeToken = keyof typeof iconSizes;
 
@@ -56,6 +56,8 @@ const lucideMap: Partial<Record<IconName, any>> = {
   plus: Lucide.Plus,
   wifiOff: Lucide.WifiOff,
   alertTriangle: Lucide.AlertTriangle,
+  share: Lucide.Share,
+  copy: Lucide.Copy,
 };
 
 export function Icon({ name, size = 'md', color = 'currentColor', strokeWidth = 1.5, style }: Props) {

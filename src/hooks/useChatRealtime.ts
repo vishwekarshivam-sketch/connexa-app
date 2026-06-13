@@ -9,9 +9,11 @@ export function useChatRealtime(houseId: string, threadId: string) {
   const queryClient = useQueryClient();
 
   useEffect(() => {
+    if (!houseId || !threadId) return;
+
     const client = requireSupabase();
     const channel = client
-      .channel(`house-chat-${houseId}`)
+      .channel(`house-chat-${houseId}-${threadId}`)
       .on(
         'postgres_changes',
         {

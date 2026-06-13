@@ -57,13 +57,13 @@ export function PhotoStep({ navigation }: Props) {
       </View>
     }>
       <TopBar onBack={navigation.goBack}>
-        <StepProgress step={2} total={4} />
+        <StepProgress step={2} total={5} />
       </TopBar>
       <View style={{ paddingTop: 30, flex: 1 }}>
         <Title size={34} style={{ marginBottom: 14 }}>One photo of you.</Title>
         <Body style={{ marginBottom: 38 }}>Just one. Tap to choose. We'll crop it square.</Body>
         {!!err && (
-          <Text style={{ fontFamily: fonts.body, fontStyle: 'italic', fontSize: 13.5, color: colors.ember, marginBottom: 18 }}>
+          <Text style={{ fontFamily: fonts.bodyItalic, fontStyle: 'italic', fontSize: 13.5, color: colors.ember, marginBottom: 18 }}>
             {err}
           </Text>
         )}
@@ -82,7 +82,7 @@ export function PhotoStep({ navigation }: Props) {
                 ? <Image source={{ uri: photoUri }} style={{ width: 208, height: 208 }} />
                 : (
                   <Text style={{ 
-                    fontFamily: fonts.body, 
+                    fontFamily: fonts.bodyItalic, 
                     fontStyle: 'italic', 
                     fontSize: 14, 
                     color: colors.inkWhisper 

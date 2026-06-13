@@ -10,7 +10,7 @@ export function useChatMessages(threadId: string) {
     queryFn: async ({ pageParam = null }) => {
       const query = requireSupabase()
         .from('house_messages')
-        .select('*')
+        .select('*, reactions:message_reactions(*)')
         .eq('thread_id', threadId)
         .is('deleted_at', null)
         .order('created_at', { ascending: false })

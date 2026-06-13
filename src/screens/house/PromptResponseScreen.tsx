@@ -22,10 +22,13 @@ import { Button } from '@/components/Button';
 import { useHouseHome } from '@/hooks/useHouseHome';
 import { Skeleton } from '@/components/Skeleton';
 
+import { HOUSES } from '@/fixtures/houseData';
+
 type Props = NativeStackScreenProps<ProfileStackParamList, 'PromptResponse'>;
 
 export function PromptResponseScreen({ navigation }: Props) {
   const { user } = useAuth();
+  const house = HOUSES[user?.house || 'tinkerers'];
   const queryClient = useQueryClient();
   const { data: homeData, isLoading: loadingHome } = useHouseHome(user?.house || '');
   const [text, setText] = useState('');
@@ -120,7 +123,7 @@ export function PromptResponseScreen({ navigation }: Props) {
           onPress={() => submitResponse.mutate(text)}
           disabled={!text.trim() || submitResponse.isPending}
           variant="primary"
-          style={{ backgroundColor: colors.lake }} // Should ideally be house color
+          style={{ backgroundColor: house.primary }}
         />
       </View>
     </KeyboardAvoidingView>
@@ -189,7 +192,7 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   attribution: {
-    fontFamily: fonts.body,
+    fontFamily: fonts.bodyItalic,
     fontSize: 14,
     color: colors.inkWhisper,
     fontStyle: 'italic',

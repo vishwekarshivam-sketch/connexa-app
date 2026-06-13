@@ -5,6 +5,7 @@ import { Title } from '@/components/Title';
 import { Eyebrow } from '@/components/Eyebrow';
 import { SelectCard } from '@/components/SelectCard';
 import { View } from 'react-native';
+import { colors } from '@/tokens';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'UserType'>;
 
@@ -12,7 +13,7 @@ export function UserTypeScreen({ navigation }: Props) {
   return (
     <Screen>
       <View style={{ paddingTop: 18 }}>
-        <Eyebrow color="#A8421F" style={{ marginBottom: 22 }}>Connexa</Eyebrow>
+        <Eyebrow color={colors.ember} style={{ marginBottom: 22 }}>Connexa</Eyebrow>
         <Title size={42} weight="300" style={{ marginBottom: 0 }}>
           {'Who are you\njoining as?'}
         </Title>

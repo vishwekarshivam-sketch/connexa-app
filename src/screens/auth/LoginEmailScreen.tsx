@@ -25,7 +25,6 @@ export function LoginEmailScreen({ navigation }: Props) {
     // If it is, send OTP
     navigation.navigate('Otp', { 
       email: v, 
-      next: 'ProfileName', 
       userType: v.endsWith('@iitb.ac.in') ? 'non_fresher' : 'fresher', 
       iit: v.endsWith('@iitb.ac.in') ? 'iitb' : 'other' // Real logic will rely on verification step
     });

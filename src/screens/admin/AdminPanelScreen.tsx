@@ -79,7 +79,7 @@ export function AdminPanelScreen({ navigation }: Props) {
             Connexa · Admin
           </Text>
           <Text style={{
-            fontFamily: fonts.body,
+            fontFamily: fonts.bodyItalic,
             fontSize: 12,
             fontStyle: 'italic',
             color: 'rgba(239, 231, 214, 0.4)',
@@ -197,7 +197,7 @@ export function AdminPanelScreen({ navigation }: Props) {
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             {isDesktop && (
               <Text style={{
-                fontFamily: fonts.body,
+                fontFamily: fonts.bodyItalic,
                 fontSize: 12,
                 fontStyle: 'italic',
                 color: colors.inkWhisper,

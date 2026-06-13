@@ -1,8 +1,6 @@
 // src/lib/query-keys.ts
 export interface IntroFilters {
-  houseId?: string;
-  status?: 'pending' | 'accepted' | 'passed';
-  limit?: number;
+  iit?: string;
 }
 
 export const keys = {

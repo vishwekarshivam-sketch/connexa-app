@@ -20,6 +20,9 @@ BEGIN
     ), '[]'::jsonb),
     'members_count', (
       SELECT COUNT(*) FROM users u WHERE u.house = p_house_id AND u.status IN ('onboarding', 'active')
+    ),
+    'invite_count', (
+      SELECT COUNT(*) FROM invites i WHERE i.inviter_id = auth.uid() AND i.used_by IS NOT NULL
     )
   );
 END;

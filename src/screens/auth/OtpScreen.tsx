@@ -11,11 +11,14 @@ import { OtpInput } from '@/components/OtpInput';
 import { Button } from '@/components/Button';
 import { Eyebrow } from '@/components/Eyebrow';
 import { sendOtp, verifyOtp } from '@/lib/supabase';
+import { getNextOnboardingStep } from '@/lib/navigation';
+import { useAuthStore } from '@/stores/authStore';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Otp'>;
 
 export function OtpScreen({ navigation, route }: Props) {
-  const { email, next, userType, iit } = route.params;
+  const { email, userType, iit } = route.params;
+  const session = useAuthStore(state => state.session);
   const [code, setCode] = useState('');
   const [left, setLeft] = useState(60);
   const [err, setErr] = useState('');
@@ -42,13 +45,29 @@ export function OtpScreen({ navigation, route }: Props) {
   const submit = async () => {
     if (verifying || code.length < 6) return;
     setVerifying(true);
-    const { error } = await verifyOtp(email, code, { userType, iit });
+    const { error, user: profile } = await verifyOtp(email, code, { userType, iit });
     setVerifying(false);
     if (error) {
       setErr(error);
       return;
     }
-    navigation.navigate(next);
+
+    const nextStep = getNextOnboardingStep(profile ?? null, session);
+    if (nextStep === 'Main') {
+      // RootNavigator will handle
+      return;
+    }
+    
+    if (nextStep === 'Pending') {
+      navigation.replace('Pending', {
+        displayName: profile?.display_name || 'Your application',
+        iitLabel: profile?.iit || 'IIT',
+        roll: '...',
+        email: profile?.email || email
+      });
+    } else {
+      navigation.replace(nextStep as any);
+    }
   };
 
   const resend = async () => {
@@ -82,7 +101,7 @@ export function OtpScreen({ navigation, route }: Props) {
       {!!err && (
         <Text style={{ 
           marginTop: 14,
-          fontFamily: fonts.body, 
+          fontFamily: fonts.bodyItalic, 
           fontStyle: 'italic', 
           fontSize: 13.5, 
           color: colors.ember 
@@ -93,7 +112,7 @@ export function OtpScreen({ navigation, route }: Props) {
       <View style={{ marginTop: 26 }}>
         {left > 0 ? (
           <Text style={{ 
-            fontFamily: fonts.body, 
+            fontFamily: fonts.bodyItalic, 
             fontStyle: 'italic', 
             fontSize: 13.5, 
             color: colors.inkWhisper 

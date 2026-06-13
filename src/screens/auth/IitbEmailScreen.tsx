@@ -23,7 +23,7 @@ export function IitbEmailScreen({ navigation }: Props) {
     const v = email.trim().toLowerCase();
     if (!v) { setErr('Enter your IITB email.'); return; }
     if (!ok) { setErr('Only @iitb.ac.in emails are accepted here.'); return; }
-    navigation.navigate('Otp', { email: v, next: 'ProfileName', userType: 'non_fresher', iit: 'iitb' });
+    navigation.navigate('Otp', { email: v, userType: 'non_fresher', iit: 'iitb' });
   };
 
   return (

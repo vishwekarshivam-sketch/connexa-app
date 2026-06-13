@@ -1,4 +1,5 @@
-import { ScrollView, View, Text, Image, TouchableOpacity } from 'react-native';
+import { useEffect, useState } from 'react';
+import { ScrollView, View, Text, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ProfileStackParamList } from '@/types';
@@ -7,6 +8,7 @@ import { HOUSES } from '@/fixtures/houseData';
 import { Mark } from '@/components/Mark';
 import { Icon } from '@/components/Icon';
 import { useAuth } from '@/context/AuthContext';
+import { getInviteStats } from '@/lib/supabase';
 
 type Props = NativeStackScreenProps<ProfileStackParamList, 'MyProfile'>;
 
@@ -34,6 +36,11 @@ function Chip({ label }: { label: string }) {
 export function MyProfileScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
+  const [inviteStats, setInviteStats] = useState<{ invited: number; bonus_earned: number } | null>(null);
+
+  useEffect(() => {
+    getInviteStats().then(setInviteStats);
+  }, []);
 
   const houseKey = user?.house ?? 'tinkerers';
   const house = HOUSES[houseKey];
@@ -231,7 +238,7 @@ export function MyProfileScreen({ navigation }: Props) {
           My Responses
         </Text>
         <Text style={{
-          fontFamily: fonts.body,
+          fontFamily: fonts.bodyItalic,
           fontStyle: 'italic',
           fontSize: 14,
           color: colors.inkWhisper,
@@ -241,12 +248,16 @@ export function MyProfileScreen({ navigation }: Props) {
         </Text>
 
         {/* Invite stats */}
-        <View style={{
-          borderWidth: 1,
-          borderColor: colors.hairlineSoft,
-          padding: 16,
-          marginBottom: 24,
-        }}>
+        <TouchableOpacity 
+          onPress={() => navigation.navigate('Invites')}
+          activeOpacity={0.7}
+          style={{
+            borderWidth: 1,
+            borderColor: colors.hairlineSoft,
+            padding: 16,
+            marginBottom: 24,
+          }}
+        >
           <Text style={{
             fontFamily: fonts.label,
             fontSize: 10.5,
@@ -257,10 +268,14 @@ export function MyProfileScreen({ navigation }: Props) {
           }}>
             Invites
           </Text>
-          <Text style={{ fontFamily: fonts.body, fontSize: 14, color: colors.inkSoft }}>
-            — invited · — retention bonuses earned
-          </Text>
-        </View>
+          {inviteStats ? (
+            <Text style={{ fontFamily: fonts.body, fontSize: 14, color: colors.inkSoft }}>
+              {inviteStats.invited} invited · {inviteStats.bonus_earned} retention bonuses earned
+            </Text>
+          ) : (
+            <ActivityIndicator size="small" color={colors.inkWhisper} style={{ alignSelf: 'flex-start' }} />
+          )}
+        </TouchableOpacity>
 
         {/* Date profile link */}
         <TouchableOpacity hitSlop={8}>

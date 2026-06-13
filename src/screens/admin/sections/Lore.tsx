@@ -216,7 +216,7 @@ export function Lore() {
                 </Text>
               </View>
               <Text style={{ 
-                fontFamily: fonts.body, 
+                fontFamily: fonts.bodyItalic, 
                 fontSize: 14, 
                 color: colors.ink,
                 fontStyle: 'italic',

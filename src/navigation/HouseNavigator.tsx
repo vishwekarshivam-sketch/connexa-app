@@ -7,6 +7,7 @@ import { PromptResponseScreen } from '@/screens/house/PromptResponseScreen';
 import { HouseChatScreen } from '@/screens/house/HouseChatScreen';
 import { ThreadViewScreen } from '@/screens/house/ThreadViewScreen';
 import { LoreScreen } from '@/screens/house/LoreScreen';
+import { InvitesScreen } from '@/screens/house/InvitesScreen';
 
 const Stack = createNativeStackNavigator<HouseStackParamList>();
 
@@ -20,6 +21,7 @@ export function HouseNavigator() {
       <Stack.Screen name="Discover" component={DiscoverScreen} />
       <Stack.Screen name="HouseProfile" component={OtherProfileScreen} />
       <Stack.Screen name="Lore" component={LoreScreen} />
+      <Stack.Screen name="Invites" component={InvitesScreen} />
     </Stack.Navigator>
   );
 }
