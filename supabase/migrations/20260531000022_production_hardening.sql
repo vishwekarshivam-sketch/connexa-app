@@ -161,6 +161,7 @@ CREATE INDEX IF NOT EXISTS idx_verification_submissions_user_id ON public.verifi
 
 -- ── HIGH: scope message_reactions (was qual=true → any user read/del any row) ───
 DROP POLICY IF EXISTS reactions_house_members ON public.message_reactions;
+DROP POLICY IF EXISTS reactions_read_house ON public.message_reactions;
 CREATE POLICY reactions_read_house ON public.message_reactions
   FOR SELECT TO authenticated
   USING (
@@ -170,8 +171,10 @@ CREATE POLICY reactions_read_house ON public.message_reactions
       WHERE t.house = (SELECT u.house FROM public.users u WHERE u.id = (select auth.uid()))
     )
   );
+DROP POLICY IF EXISTS reactions_insert_own ON public.message_reactions;
 CREATE POLICY reactions_insert_own ON public.message_reactions
   FOR INSERT TO authenticated WITH CHECK (user_id = (select auth.uid()));
+DROP POLICY IF EXISTS reactions_delete_own ON public.message_reactions;
 CREATE POLICY reactions_delete_own ON public.message_reactions
   FOR DELETE TO authenticated USING (user_id = (select auth.uid()));
 
